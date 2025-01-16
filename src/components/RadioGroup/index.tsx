@@ -15,7 +15,7 @@ import { TypographyPropsVariantOverrides } from '@mui/material'
 export interface RadioOption {
   label: string
   fontColor?: string
-  fontVariant?: keyof TypographyPropsVariantOverrides
+  fontVariant?: string
 }
 
 /**
