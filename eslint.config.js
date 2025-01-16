@@ -5,7 +5,7 @@ import reactPlugin from 'eslint-plugin-react'
 import reactHooksPlugin from 'eslint-plugin-react-hooks'
 import prettierPlugin from 'eslint-plugin-prettier'
 import nextPlugin from '@next/eslint-plugin-next'
-import globals from 'globals'
+import _globals from 'globals'
 import { fileURLToPath } from 'url'
 import { dirname } from 'path'
 
@@ -14,53 +14,54 @@ const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
 
 /**
- * Converts plugin config into a rules object.
- * Returns {} if config is undefined, array, or missing `.rules`.
+ * Converts a config into a rules object.
+ * Returns {} if config is undefined, is an array, or lacks `.rules`.
  */
 function toRulesObject(config) {
-  // No config at all
   if (!config) return {}
-
-  // If config is an array, you can decide how to handle it (merge them? skip?):
   if (Array.isArray(config)) {
-    // This example just returns empty for arrays
     return {}
   }
-
-  // If it's an object, see if it has `.rules`:
   if (!config.rules || typeof config.rules !== 'object') {
     return {}
   }
-
-  // Otherwise, return the `rules` object
   return config.rules
 }
 
+// Combine globals from the 'globals' package:
+const combinedGlobals = {
+  ..._globals.browser,
+  ..._globals.es2021,
+  ..._globals.node,
+}
+
+// Sanitize any keys that may have trailing/leading whitespace:
+for (const key of Object.keys(combinedGlobals)) {
+  const trimmedKey = key.trim()
+  if (trimmedKey !== key) {
+    combinedGlobals[trimmedKey] = combinedGlobals[key]
+    delete combinedGlobals[key]
+  }
+}
+
 export default [
-  // The basic recommended config from eslint
-  js.configs.recommended,
-
-  // TypeScript ESLint recommended
-  tseslint.configs.recommended,
-  tseslint.configs['recommended-requiring-type-checking'],
-
-  // React recommended
-  reactPlugin.configs.recommended,
-
-  // React Hooks recommended
-  reactHooksPlugin.configs.recommended,
-
-  // Next.js recommended
-  nextPlugin.configs.recommended,
-
-  // Prettier recommended
-  prettierPlugin.configs.recommended,
-
+  // 1) Merged plugin "recommended" rules (flat config doesn't use "extends")
   {
-    // Apply to JS/TS files:
+    rules: {
+      ...toRulesObject(js.configs.recommended),
+      ...toRulesObject(tseslint.configs.recommended),
+      ...toRulesObject(tseslint.configs['recommended-requiring-type-checking']),
+      ...toRulesObject(reactPlugin.configs.recommended),
+      ...toRulesObject(reactHooksPlugin.configs.recommended),
+      ...toRulesObject(nextPlugin.configs.recommended),
+      ...toRulesObject(prettierPlugin.configs.recommended),
+    },
+  },
+
+  // 2) Config that applies to JS/TS files, with parser & custom rules
+  {
     files: ['**/*.{js,mjs,cjs,jsx,ts,tsx}'],
 
-    // Register the plugins
     plugins: {
       '@typescript-eslint': tseslint,
       react: reactPlugin,
@@ -69,14 +70,13 @@ export default [
       '@next/next': nextPlugin,
     },
 
-    // Tell ESLint to use the @typescript-eslint parser
     languageOptions: {
       parser: tseslintParser,
       parserOptions: {
         ecmaVersion: 'latest',
         sourceType: 'module',
 
-        // Crucial for type-aware linting:
+        // Type-aware linting
         project: './tsconfig.json',
         tsconfigRootDir: __dirname,
 
@@ -84,11 +84,7 @@ export default [
         allowJs: true,
         checkJs: true,
       },
-      globals: {
-        ...globals.browser,
-        ...globals.es2021,
-        ...globals.node,
-      },
+      globals: combinedGlobals,
     },
 
     settings: {
@@ -98,31 +94,37 @@ export default [
     },
 
     rules: {
-      // Merge each plugin's recommended 'rules'
-      ...toRulesObject(tseslint.configs?.recommended),
-      ...toRulesObject(reactPlugin.configs?.recommended),
-      ...toRulesObject(reactHooksPlugin.configs?.recommended),
-      ...toRulesObject(prettierPlugin.configs?.recommended),
-      ...toRulesObject(nextPlugin.configs?.recommended),
+      // Turn off base rule & enable TypeScript-specific version
+      'no-unused-vars': 'off',
+      '@typescript-eslint/no-unused-vars': 'error',
 
-      // Your custom rules
-      'no-unused-vars': 'off', // Turn off base rule
-      '@typescript-eslint/no-unused-vars': 'error', // Use TypeScript-specific rule instead
+      // Misc warnings
       'no-undef': 'warn',
       'no-empty': 'warn',
       'no-case-declarations': 'warn',
       'react/display-name': 'warn',
       'no-useless-catch': 'warn',
       'react/no-unescaped-entities': 'warn',
+
+      // React Hooks
       'react-hooks/rules-of-hooks': 'error',
       'react-hooks/exhaustive-deps': 'error',
+
+      // Prettier
       'prettier/prettier': 'warn',
+
+      // TS-specific overrides
       '@typescript-eslint/ban-ts-comment': 'off',
       '@typescript-eslint/explicit-module-boundary-types': 'off',
+
+      // Turn off the 'no-floating-promises' rule:
+      '@typescript-eslint/no-floating-promises': 'off',
+
+      // React-specific overrides
       'react/prop-types': 'off',
       'react/react-in-jsx-scope': 'off',
 
-      // Examples of turning certain rules into errors
+      // Certain rules as errors
       'no-unreachable': 'error',
       'no-unreachable-loop': 'error',
       'no-fallthrough': 'error',
