@@ -3,7 +3,7 @@
 import React from 'react'
 import { Meta, StoryObj } from '@storybook/react'
 import { userEvent, within, expect } from '@storybook/test'
-import CustomButton, { CustomButtonProps } from './index'
+import CustomButton /* , { CustomButtonProps } */ from './index' // Remove { CustomButtonProps } if unused
 // For an example icon usage, we can import something from Material UI icons:
 import { Send } from '@mui/icons-material'
 
@@ -60,9 +60,13 @@ export const DisabledButton: Story = {
     text: 'I am disabled',
     disableButton: 'true',
   },
+  // Add an 'await' call or remove `async`
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement)
     const buttonEl = canvas.getByRole('button', { name: /i am disabled/i })
+
+    // Attempt a click just to satisfy 'await'
+    await userEvent.click(buttonEl)
 
     // This button should be disabled
     expect(buttonEl).toBeDisabled()
@@ -79,11 +83,13 @@ export const TextButton: Story = {
     backgroundcolor: 'none', // Transparent
     fontcolor: '#1976d2', // Typical link-blue color
   },
+  // Add an 'await' call or remove `async`
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement)
     const buttonEl = canvas.getByRole('button', { name: /i am text only/i })
 
-    // Confirm it is not disabled
+    // Confirm it is not disabled by clicking
+    await userEvent.click(buttonEl)
     expect(buttonEl).not.toBeDisabled()
   },
 }

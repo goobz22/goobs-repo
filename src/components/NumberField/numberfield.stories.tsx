@@ -1,9 +1,8 @@
 // src/components/NumberField/numberfield.stories.tsx
 
-import React from 'react'
 import type { Meta, StoryObj } from '@storybook/react'
 import { within, userEvent, expect } from '@storybook/test'
-import NumberField, { NumberFieldProps } from './index'
+import NumberField from './index'
 
 /**
  * Configure Storybook metadata
@@ -23,40 +22,41 @@ type Story = StoryObj<typeof NumberField>
 
 /**
  * 1) Basic usage (empty by default)
+ *    - No user interactions => remove `async`.
  */
 export const Basic: Story = {
   args: {
     label: 'Enter a Number',
     initialValue: '',
   },
-  play: async ({ canvasElement }) => {
+  play: ({ canvasElement }) => {
     const canvas = within(canvasElement)
     // Confirm the label
-    const input = canvas.getByLabelText('Enter a Number') as HTMLInputElement
-    expect(input.value).toBe('')
+    const input = canvas.getByLabelText('Enter a Number')
+    expect(input).toHaveValue('')
   },
 }
 
 /**
  * 2) With Initial Value
+ *    - No user interactions => remove `async`.
  */
 export const WithInitialValue: Story = {
   args: {
     label: 'Number With Initial Value',
     initialValue: '123',
   },
-  play: async ({ canvasElement }) => {
+  play: ({ canvasElement }) => {
     const canvas = within(canvasElement)
     // Confirm initial value
-    const input = canvas.getByLabelText(
-      'Number With Initial Value'
-    ) as HTMLInputElement
-    expect(input.value).toBe('123')
+    const input = canvas.getByLabelText('Number With Initial Value')
+    expect(input).toHaveValue('123')
   },
 }
 
 /**
  * 3) Min/Max Constraints
+ *    - Uses `await userEvent...` => keep `async`.
  */
 export const WithMinMax: Story = {
   args: {
@@ -67,29 +67,28 @@ export const WithMinMax: Story = {
   },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement)
-    const input = canvas.getByLabelText(
-      'Number With Min=10 & Max=20'
-    ) as HTMLInputElement
+    const input = canvas.getByLabelText('Number With Min=10 & Max=20')
 
     // Confirm initial value "15"
-    expect(input.value).toBe('15')
+    expect(input).toHaveValue('15')
 
     // Type a smaller value "5"
     await userEvent.clear(input)
     await userEvent.type(input, '5')
     // The component should set it to "10" since min=10
-    expect(input.value).toBe('10')
+    expect(input).toHaveValue('10')
 
     // Type a larger value "25"
     await userEvent.clear(input)
     await userEvent.type(input, '25')
     // The component should set it to "20" since max=20
-    expect(input.value).toBe('20')
+    expect(input).toHaveValue('20')
   },
 }
 
 /**
  * 4) Custom Styles
+ *    - Uses `await userEvent...` => keep `async`.
  */
 export const CustomStyles: Story = {
   args: {
@@ -102,20 +101,19 @@ export const CustomStyles: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement)
     // Verify initial
-    const input = canvas.getByLabelText(
-      'Custom Styled NumberField'
-    ) as HTMLInputElement
-    expect(input.value).toBe('42')
+    const input = canvas.getByLabelText('Custom Styled NumberField')
+    expect(input).toHaveValue('42')
 
     // Type "123"
     await userEvent.clear(input)
     await userEvent.type(input, '123')
-    expect(input.value).toBe('123')
+    expect(input).toHaveValue('123')
   },
 }
 
 /**
  * 5) Manual Typing Interaction
+ *    - Uses `await userEvent...` => keep `async`.
  */
 export const ManualTyping: Story = {
   args: {
@@ -126,14 +124,14 @@ export const ManualTyping: Story = {
   },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement)
-    const input = canvas.getByLabelText('Manual Typing') as HTMLInputElement
+    const input = canvas.getByLabelText('Manual Typing')
 
     // Type "567"
     await userEvent.type(input, '567')
-    expect(input.value).toBe('567')
+    expect(input).toHaveValue('567')
 
     // Now type some non-digits like "abc", which should be ignored
     await userEvent.type(input, 'abc')
-    expect(input.value).toBe('567')
+    expect(input).toHaveValue('567')
   },
 }

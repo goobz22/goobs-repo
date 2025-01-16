@@ -1,6 +1,5 @@
 // src/components/PricingTable/pricingtable.stories.tsx
 
-import React from 'react'
 import { Meta, StoryObj } from '@storybook/react'
 import { within, userEvent, expect } from '@storybook/test'
 import PricingTable, { PricingProps } from './index'
@@ -24,12 +23,13 @@ type Story = StoryObj<typeof PricingTable>
 
 /**
  * 1) Default usage with the provided defaultConfig
+ *    No `await` usage => remove `async`.
  */
 export const Default: Story = {
   args: {
     ...defaultConfig,
   },
-  play: async ({ canvasElement }) => {
+  play: ({ canvasElement }) => {
     const canvas = within(canvasElement)
     // Confirm that a main feature like "Frontend Components" is visible
     expect(canvas.getByText('Frontend Components')).toBeInTheDocument()
@@ -42,6 +42,7 @@ export const Default: Story = {
 
 /**
  * 2) Switch packages in the dropdown
+ *    Uses `await userEvent...`, so keep `async`.
  */
 export const SwitchPackages: Story = {
   args: {
@@ -67,7 +68,7 @@ export const SwitchPackages: Story = {
 
 /**
  * 3) Custom Title & More Features
- *    Demonstrates overriding the default config's table title, etc.
+ *    No `await` usage => remove `async`.
  */
 export const CustomTitle: Story = {
   args: {
@@ -77,7 +78,7 @@ export const CustomTitle: Story = {
       columnconfig: defaultConfig.tabletitle?.columnconfig,
     },
   },
-  play: async ({ canvasElement }) => {
+  play: ({ canvasElement }) => {
     const canvas = within(canvasElement)
     // Check for the new custom table title
     expect(canvas.getByText('My Custom Pricing Table')).toBeInTheDocument()
@@ -86,7 +87,7 @@ export const CustomTitle: Story = {
 
 /**
  * 4) Minimal scenario (no features)
- *    Show how the PricingTable behaves if we pass an empty 'features' array.
+ *    No `await` usage => remove `async`.
  */
 export const NoFeatures: Story = {
   args: {
@@ -94,7 +95,7 @@ export const NoFeatures: Story = {
     features: [],
   },
   name: 'Empty Features',
-  play: async ({ canvasElement }) => {
+  play: ({ canvasElement }) => {
     const canvas = within(canvasElement)
     // "Frontend Components" won't exist because features is empty
     expect(canvas.queryByText('Frontend Components')).not.toBeInTheDocument()
@@ -106,6 +107,7 @@ export const NoFeatures: Story = {
 
 /**
  * 5) Only 2 packages scenario
+ *    We do have an `await userEvent.click`, so keep `async`.
  */
 export const TwoPackages: Story = {
   args: {

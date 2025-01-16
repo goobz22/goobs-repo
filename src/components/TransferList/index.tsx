@@ -292,7 +292,7 @@ const TransferList: React.FC<TransferListProps> = ({
           options={dropdownOptions}
           value={selectedDropdownValue}
           onChange={e => {
-            const newValue = e.target.value as string
+            const newValue = e.target.value
             setSelectedDropdownValue(newValue)
           }}
         />

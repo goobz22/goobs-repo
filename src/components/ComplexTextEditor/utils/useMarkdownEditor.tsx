@@ -8,6 +8,9 @@ const boldAndItalicPattern = /(\*\*\*(.*?)\*\*\*)/g
 const boldPattern = /(\*\*(.*?)\*\*)/g
 const italicPattern = /(\*(.*?)\*)/g
 
+/**
+ * 1) Converts markdown to Slate format (async because we use Promise.all)
+ */
 export const markdownToSlate = async (
   markdown: string
 ): Promise<RichTextEditorTypes['CustomElement'][]> => {
@@ -18,7 +21,7 @@ export const markdownToSlate = async (
     .filter(line => line)
 
   const output: RichTextEditorTypes['CustomElement'][] = await Promise.all(
-    lines.map(async line => {
+    lines.map(line => {
       const paragraph: RichTextEditorTypes['CustomElement'] = {
         type: 'paragraph',
         children: [{ text: line }],
@@ -60,6 +63,9 @@ export const markdownToSlate = async (
   return output
 }
 
+/**
+ * 2) Switch from Markdown to RichText mode (async because we call markdownToSlate)
+ */
 export const handleSwitchToRichText = async (
   markdown: string,
   setSlateValue: (value: RichTextEditorTypes['CustomElement'][]) => void,
@@ -80,43 +86,55 @@ export const handleSwitchToRichText = async (
   }
 }
 
-export const handleBoldClick = async (
+/**
+ * 3) Apply bold markdown around selectedText (NO async since we do no awaiting)
+ */
+export const handleBoldClick = (
   selectedText: string,
   markdown: string,
   setMarkdown: (value: string) => void
-): Promise<void> => {
+): void => {
   if (selectedText) {
     const newValue = '**' + selectedText + '**'
-    await replaceSelectedText(newValue, markdown, selectedText, setMarkdown)
+    replaceSelectedText(newValue, markdown, selectedText, setMarkdown)
   }
 }
 
-export const handleItalicClick = async (
+/**
+ * 4) Apply italic markdown around selectedText (NO async)
+ */
+export const handleItalicClick = (
   selectedText: string,
   markdown: string,
   setMarkdown: (value: string) => void
-): Promise<void> => {
+): void => {
   if (selectedText) {
     const newValue = '_' + selectedText + '_'
-    await replaceSelectedText(newValue, markdown, selectedText, setMarkdown)
+    replaceSelectedText(newValue, markdown, selectedText, setMarkdown)
   }
 }
 
-export const replaceSelectedText = async (
+/**
+ * 5) Replace the selected text with newValue in the original markdown (NO async)
+ */
+export const replaceSelectedText = (
   newValue: string,
   markdown: string,
   selectedText: string,
   setMarkdown: (value: string) => void
-): Promise<void> => {
+): void => {
   if (selectedText) {
     const newMarkdown = markdown.replace(selectedText, newValue)
     setMarkdown(newMarkdown)
   }
 }
 
-export const handleMarkdownChange = async (
+/**
+ * 6) Handle markdown input changes (NO async)
+ */
+export const handleMarkdownChange = (
   event: React.ChangeEvent<HTMLTextAreaElement | HTMLInputElement>,
   setMarkdown: (value: string) => void
-): Promise<void> => {
+): void => {
   setMarkdown(event.target.value)
 }

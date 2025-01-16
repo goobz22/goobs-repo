@@ -48,7 +48,7 @@ export interface columnconfig {
   paddingbottom?: ResponsiveValue<number>
   paddingright?: ResponsiveValue<number>
   paddingleft?: ResponsiveValue<number>
-  columnwidth?: string // We'll fallback to defaultColumnWidth if not provided
+  columnwidth?: string
   component?: React.ReactNode
   bordercolor?: string
   cellconfig?: cellconfig
@@ -70,26 +70,23 @@ export interface gridconfig {
   paddingleft?: ResponsiveValue<number>
   gridwidth?: string
   bordercolor?: string
-
-  /**
-   * A default column width (e.g., "150px") to use if none is specified at the column level.
-   * If not provided, we might fallback to "150px" or "auto".
-   */
   defaultColumnWidth?: string
 }
 
 export interface CustomGridProps extends Omit<Grid2Props, 'children'> {
-  gridconfig?: gridconfig
+  gridconfig?: gridconfig | gridconfig[]
   columnconfig?: columnconfig[]
   cellconfig?: cellconfig
 }
 
+/** Checks if `value` is a responsive object vs. a plain value */
 function isResponsiveObject<T>(
   value: ResponsiveValue<T> | undefined
 ): value is ResponsiveObject<T> {
   return typeof value === 'object' && value !== null && !Array.isArray(value)
 }
 
+/** Returns the value for the current breakpoint, if present */
 function getResponsiveValue<T>(
   value: ResponsiveValue<T> | undefined,
   breakpoint: Breakpoint
@@ -118,7 +115,7 @@ function CustomGrid({
   const isExtraLarge = useMediaQuery('(min-width:1537px)') // xl
 
   // Determine the current breakpoint
-  const currentBreakpoint = React.useMemo((): Breakpoint => {
+  const currentBreakpoint = React.useMemo<Breakpoint>(() => {
     if (isMobile) return 'xs'
     if (isSmallTablet) return 'sm'
     if (isMediumSmall) return 'md'
@@ -135,54 +132,44 @@ function CustomGrid({
     isExtraLarge,
   ])
 
+  // Convert gridconfig to a single object
+  const singleGridConfig: gridconfig | undefined = Array.isArray(gridconfig)
+    ? gridconfig[0]
+    : gridconfig
+
   // Extract any grid-level config (like defaultColumnWidth)
   const {
-    defaultColumnWidth = '150px', // fallback if not provided
-    ...gridConfigValues
-  } = Array.isArray(gridconfig) ? gridconfig[0] : gridconfig || {}
+    defaultColumnWidth = '150px',
+    alignment,
+    margintop,
+    marginbottom,
+    marginleft,
+    marginright,
+    paddingtop,
+    paddingbottom,
+    paddingleft,
+    paddingright,
+    gridwidth,
+  } = singleGridConfig || {}
 
   // Decide alignment for the entire grid container
   const gridJustifyContent =
-    gridConfigValues?.alignment === 'left'
+    alignment === 'left'
       ? 'flex-start'
-      : gridConfigValues?.alignment === 'right'
+      : alignment === 'right'
         ? 'flex-end'
         : 'center'
 
-  // Grid-level margin/padding, responsive
-  const gridMarginTop = getResponsiveValue(
-    gridConfigValues?.margintop,
-    currentBreakpoint
-  )
-  const gridMarginBottom = getResponsiveValue(
-    gridConfigValues?.marginbottom,
-    currentBreakpoint
-  )
-  const gridMarginLeft = getResponsiveValue(
-    gridConfigValues?.marginleft,
-    currentBreakpoint
-  )
-  const gridMarginRight = getResponsiveValue(
-    gridConfigValues?.marginright,
-    currentBreakpoint
-  )
+  // Resolve grid-level margin/padding (responsive)
+  const gridMarginTop = getResponsiveValue(margintop, currentBreakpoint)
+  const gridMarginBottom = getResponsiveValue(marginbottom, currentBreakpoint)
+  const gridMarginLeft = getResponsiveValue(marginleft, currentBreakpoint)
+  const gridMarginRight = getResponsiveValue(marginright, currentBreakpoint)
 
-  const gridPaddingTop = getResponsiveValue(
-    gridConfigValues?.paddingtop,
-    currentBreakpoint
-  )
-  const gridPaddingBottom = getResponsiveValue(
-    gridConfigValues?.paddingbottom,
-    currentBreakpoint
-  )
-  const gridPaddingLeft = getResponsiveValue(
-    gridConfigValues?.paddingleft,
-    currentBreakpoint
-  )
-  const gridPaddingRight = getResponsiveValue(
-    gridConfigValues?.paddingright,
-    currentBreakpoint
-  )
+  const gridPaddingTop = getResponsiveValue(paddingtop, currentBreakpoint)
+  const gridPaddingBottom = getResponsiveValue(paddingbottom, currentBreakpoint)
+  const gridPaddingLeft = getResponsiveValue(paddingleft, currentBreakpoint)
+  const gridPaddingRight = getResponsiveValue(paddingright, currentBreakpoint)
 
   // Number of rows = highest row index in columnconfig
   const rows = Math.max(...(columnconfig || []).map(c => c.row || 1), 1)
@@ -190,7 +177,7 @@ function CustomGrid({
   return (
     <Grid2
       container
-      width={gridConfigValues.gridwidth || '100%'}
+      width={gridwidth || '100%'}
       display="flex"
       flexDirection="column"
       justifyContent={gridJustifyContent}
@@ -199,7 +186,6 @@ function CustomGrid({
         padding: 0,
         margin: 0,
         gap: 0,
-        // Apply grid-level margins & paddings
         marginTop: gridMarginTop ? `${gridMarginTop * 8}px` : 0,
         marginBottom: gridMarginBottom ? `${gridMarginBottom * 8}px` : 0,
         marginLeft: gridMarginLeft ? `${gridMarginLeft * 8}px` : 0,
@@ -217,7 +203,7 @@ function CustomGrid({
       {...rest}
     >
       {Array.from({ length: rows }).map((_, rowIndex) => {
-        // Find how many columns in this row
+        // For each row
         const columnsInRow = (columnconfig || []).filter(
           c => c.row === rowIndex + 1
         )
@@ -250,22 +236,16 @@ function CustomGrid({
               const currentColumnConfig = (columnconfig || []).find(
                 c => c.row === rowIndex + 1 && c.column === columnIndex + 1
               )
+              // typed `cellconfig | undefined`
               const currentCellConfig =
                 currentColumnConfig?.cellconfig || cellconfig
 
-              const shouldWrap = currentCellConfig?.wrap !== 'nowrap'
+              const hasFixedWidth = Boolean(currentCellConfig?.width)
 
-              // Decide the final column width:
-              // 1) If 'cellconfig.width' is set, use that.
-              // 2) Otherwise, check breakpoints (mobilewidth, tabletwidth, computerwidth).
-              // 3) Otherwise, fallback to 'columnwidth' at the column level.
-              // 4) Otherwise, use 'defaultColumnWidth' from grid config.
-              const hasFixedWidth = !!currentCellConfig?.width
+              // Figure out final column width based on breakpoints & fallback
               let computedWidth = ''
-
-              if (hasFixedWidth) {
-                // If the cell itself has an explicit 'width'
-                computedWidth = currentCellConfig.width!
+              if (currentCellConfig?.width) {
+                computedWidth = currentCellConfig.width
               } else if (isMobile) {
                 computedWidth =
                   currentColumnConfig?.mobilewidth ||
@@ -297,17 +277,13 @@ function CustomGrid({
                   currentColumnConfig?.columnwidth ||
                   defaultColumnWidth
               } else {
-                // default fallback
                 computedWidth =
                   currentColumnConfig?.computerwidth ||
                   currentColumnConfig?.columnwidth ||
                   defaultColumnWidth
               }
 
-              // If you want a 100% fill approach, you can do something like
-              // computedWidth = computedWidth || `${100 / maxColumns}%`
-
-              // Determine alignment
+              // Alignment
               const justifyContent =
                 currentColumnConfig?.alignment === 'left'
                   ? 'flex-start'
@@ -315,40 +291,43 @@ function CustomGrid({
                     ? 'flex-end'
                     : 'center'
 
-              // Responsive margin/padding
-              const marginTop = getResponsiveValue(
+              // Resolve responsive margin/padding for this cell
+              const marginTopVal = getResponsiveValue(
                 currentColumnConfig?.margintop,
                 currentBreakpoint
               )
-              const marginBottom = getResponsiveValue(
+              const marginBottomVal = getResponsiveValue(
                 currentColumnConfig?.marginbottom,
                 currentBreakpoint
               )
-              const marginLeft = getResponsiveValue(
+              const marginLeftVal = getResponsiveValue(
                 currentColumnConfig?.marginleft,
                 currentBreakpoint
               )
-              const marginRight = getResponsiveValue(
+              const marginRightVal = getResponsiveValue(
                 currentColumnConfig?.marginright,
                 currentBreakpoint
               )
 
-              const paddingTop = getResponsiveValue(
+              const paddingTopVal = getResponsiveValue(
                 currentColumnConfig?.paddingtop,
                 currentBreakpoint
               )
-              const paddingBottom = getResponsiveValue(
+              const paddingBottomVal = getResponsiveValue(
                 currentColumnConfig?.paddingbottom,
                 currentBreakpoint
               )
-              const paddingLeft = getResponsiveValue(
+              const paddingLeftVal = getResponsiveValue(
                 currentColumnConfig?.paddingleft,
                 currentBreakpoint
               )
-              const paddingRight = getResponsiveValue(
+              const paddingRightVal = getResponsiveValue(
                 currentColumnConfig?.paddingright,
                 currentBreakpoint
               )
+
+              // Decide wrapping
+              const shouldWrap = currentCellConfig?.wrap !== 'nowrap'
 
               return (
                 <Grid2
@@ -361,39 +340,38 @@ function CustomGrid({
                     width: computedWidth,
                     position: 'relative',
 
-                    // If user provided a fixed width in the cell, we prevent flex from shrinking or growing
                     flexGrow: hasFixedWidth ? 0 : 1,
                     flexShrink: hasFixedWidth ? 0 : 1,
                     flexBasis: hasFixedWidth ? computedWidth : 'auto',
 
                     height: 'fit-content',
 
-                    // margin
-                    marginLeft: marginLeft
-                      ? `${marginLeft * 8}px !important`
+                    // margins
+                    marginLeft: marginLeftVal
+                      ? `${marginLeftVal * 8}px !important`
                       : '0 !important',
-                    marginRight: marginRight
-                      ? `${marginRight * 8}px !important`
+                    marginRight: marginRightVal
+                      ? `${marginRightVal * 8}px !important`
                       : '0 !important',
-                    marginTop: marginTop
-                      ? `${marginTop * 8}px !important`
+                    marginTop: marginTopVal
+                      ? `${marginTopVal * 8}px !important`
                       : '0 !important',
-                    marginBottom: marginBottom
-                      ? `${marginBottom * 8}px !important`
+                    marginBottom: marginBottomVal
+                      ? `${marginBottomVal * 8}px !important`
                       : '0 !important',
 
-                    // padding
-                    paddingLeft: paddingLeft
-                      ? `${paddingLeft * 8}px !important`
+                    // paddings
+                    paddingLeft: paddingLeftVal
+                      ? `${paddingLeftVal * 8}px !important`
                       : '0 !important',
-                    paddingRight: paddingRight
-                      ? `${paddingRight * 8}px !important`
+                    paddingRight: paddingRightVal
+                      ? `${paddingRightVal * 8}px !important`
                       : '0 !important',
-                    paddingTop: paddingTop
-                      ? `${paddingTop * 8}px !important`
+                    paddingTop: paddingTopVal
+                      ? `${paddingTopVal * 8}px !important`
                       : '0 !important',
-                    paddingBottom: paddingBottom
-                      ? `${paddingBottom * 8}px !important`
+                    paddingBottom: paddingBottomVal
+                      ? `${paddingBottomVal * 8}px !important`
                       : '0 !important',
 
                     border: 'none',
@@ -410,7 +388,7 @@ function CustomGrid({
                   }}
                   onClick={currentCellConfig?.onClick}
                 >
-                  {currentColumnConfig?.component as React.ReactNode}
+                  {currentColumnConfig?.component}
                 </Grid2>
               )
             })}

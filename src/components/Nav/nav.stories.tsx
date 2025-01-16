@@ -1,13 +1,8 @@
 // src/components/Nav/nav.stories.tsx
 
-import React from 'react'
 import { Meta, StoryObj } from '@storybook/react'
 import { within, userEvent, expect } from '@storybook/test'
-import Nav, { NavProps, NavItem } from './index'
-
-// --------------------------------------------------------------------------
-// Sample Data
-// --------------------------------------------------------------------------
+import Nav, { NavItem } from './index'
 
 /**
  * Minimal main nav item array (with no sub-nav).
@@ -123,9 +118,9 @@ const complexNavItems: NavItem[] = [
   },
 ]
 
-// --------------------------------------------------------------------------
-// Storybook Setup
-// --------------------------------------------------------------------------
+/**
+ * Storybook Setup
+ */
 const meta: Meta<typeof Nav> = {
   title: 'Components/Nav',
   component: Nav,
@@ -141,6 +136,7 @@ type Story = StoryObj<typeof Nav>
 
 /**
  * 1) Basic permanent Nav
+ *    - No userEvent => remove `async`.
  */
 export const BasicPermanent: Story = {
   name: 'Basic (Permanent)',
@@ -151,7 +147,7 @@ export const BasicPermanent: Story = {
     verticalNavTitle: 'Basic Nav',
     variant: 'permanent',
   },
-  play: async ({ canvasElement }) => {
+  play: ({ canvasElement }) => {
     const canvas = within(canvasElement)
     // The title should appear
     expect(canvas.getByText('Basic Nav')).toBeInTheDocument()
@@ -164,6 +160,7 @@ export const BasicPermanent: Story = {
 
 /**
  * 2) Subnav Example
+ *    - Uses `await userEvent.click(...)`, so keep `async`.
  */
 export const WithSubNav: Story = {
   args: {
@@ -195,6 +192,7 @@ export const WithSubNav: Story = {
 
 /**
  * 3) Searchable Nav
+ *    - Uses `await userEvent.type(...)`, so keep `async`.
  */
 export const WithSearch: Story = {
   args: {
@@ -222,6 +220,7 @@ export const WithSearch: Story = {
 
 /**
  * 4) Temporary Drawer (Mobile)
+ *    - No userEvent => remove `async`.
  */
 export const TemporaryDrawer: Story = {
   name: 'Temporary (Mobile) Drawer',
@@ -232,7 +231,7 @@ export const TemporaryDrawer: Story = {
     variant: 'temporary',
     mobileOpen: true,
   },
-  play: async ({ canvasElement }) => {
+  play: ({ canvasElement }) => {
     const canvas = within(canvasElement)
     // Check the title
     expect(canvas.getByText('Mobile Nav')).toBeInTheDocument()
@@ -243,6 +242,7 @@ export const TemporaryDrawer: Story = {
 
 /**
  * 5) Complex scenario
+ *    - Uses `await userEvent.click(...)`, so keep `async`.
  */
 export const Complex: Story = {
   name: 'Complex (With Subnav & Views + Search)',

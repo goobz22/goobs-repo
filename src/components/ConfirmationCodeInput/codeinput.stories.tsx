@@ -1,9 +1,8 @@
-// src/components/ConfirmationCodeInput/codeinput.stories.tsx
+// File: src/components/ConfirmationCodeInput/codeinput.stories.tsx
 
-import React from 'react'
 import { Meta, StoryObj } from '@storybook/react'
 import { within, userEvent, expect } from '@storybook/test'
-import ConfirmationCodeInputs, { ConfirmationCodeInputsProps } from './index'
+import ConfirmationCodeInputs from './index'
 
 /**
  * Configure Storybook metadata
@@ -23,6 +22,7 @@ type Story = StoryObj<typeof ConfirmationCodeInputs>
 
 /**
  * 1) Basic Usage (no initial value)
+ *    - No userEvent => remove async
  */
 export const Basic: Story = {
   args: {
@@ -30,9 +30,8 @@ export const Basic: Story = {
     isValid: false,
     'aria-label': 'Basic Confirmation Code',
   },
-  play: async ({ canvasElement }) => {
+  play: ({ canvasElement }) => {
     const canvas = within(canvasElement)
-
     // Confirm that each input is present
     for (let i = 1; i <= 6; i++) {
       expect(canvas.getByLabelText(`Code Digit ${i}`)).toBeInTheDocument()
@@ -42,6 +41,7 @@ export const Basic: Story = {
 
 /**
  * 2) Prefilled Value
+ *    - No userEvent => remove async
  */
 export const PrefilledValue: Story = {
   name: 'With Prefilled Value',
@@ -51,19 +51,22 @@ export const PrefilledValue: Story = {
     value: '1234',
     'aria-label': 'Prefilled Confirmation Code',
   },
-  play: async ({ canvasElement }) => {
+  play: ({ canvasElement }) => {
     const canvas = within(canvasElement)
 
     // The inputs should be "1", "2", "3", and "4"
     for (let i = 1; i <= 4; i++) {
-      const input = canvas.getByLabelText(`Code Digit ${i}`) as HTMLInputElement
-      expect(input.value).toBe(String(i))
+      const input = canvas.getByLabelText(`Code Digit ${i}`, {
+        selector: 'input',
+      })
+      expect(input).toHaveValue(String(i))
     }
   },
 }
 
 /**
  * 3) Code is valid (green indicator)
+ *    - No userEvent => remove async
  */
 export const ValidCode: Story = {
   args: {
@@ -72,13 +75,15 @@ export const ValidCode: Story = {
     isValid: true, // This should make the circle green
     'aria-label': 'Valid Confirmation Code',
   },
-  play: async ({ canvasElement }) => {
+  play: ({ canvasElement }) => {
     const canvas = within(canvasElement)
 
     // Check that each digit is in place
     for (let i = 1; i <= 6; i++) {
-      const input = canvas.getByLabelText(`Code Digit ${i}`) as HTMLInputElement
-      expect(input.value).toBe(String(i))
+      const input = canvas.getByLabelText(`Code Digit ${i}`, {
+        selector: 'input',
+      })
+      expect(input).toHaveValue(String(i))
     }
 
     // Confirm the circle is labeled "Code is valid"
@@ -88,6 +93,7 @@ export const ValidCode: Story = {
 
 /**
  * 4) Manual Typing
+ *    - Uses await => keep async
  */
 export const ManualTyping: Story = {
   args: {
@@ -100,23 +106,26 @@ export const ManualTyping: Story = {
 
     // Type "9876" across the 4 inputs
     for (let i = 1; i <= 4; i++) {
-      const input = canvas.getByLabelText(`Code Digit ${i}`) as HTMLInputElement
+      const input = canvas.getByLabelText(`Code Digit ${i}`, {
+        selector: 'input',
+      })
       await userEvent.type(input, String(9 - i)) // "9", "8", "7", "6"
-      // Move automatically to the next input after typing 1 digit
     }
 
     // Verify each input is now "9", "8", "7", "6"
     const expectedDigits = ['9', '8', '7', '6']
     for (let i = 1; i <= 4; i++) {
-      const input = canvas.getByLabelText(`Code Digit ${i}`) as HTMLInputElement
-      expect(input.value).toBe(expectedDigits[i - 1])
+      const input = canvas.getByLabelText(`Code Digit ${i}`, {
+        selector: 'input',
+      })
+      expect(input).toHaveValue(expectedDigits[i - 1])
     }
   },
 }
 
 /**
  * 5) Arrow/Backspace Navigation
- *    Demonstrates moving between inputs using arrow keys and backspace.
+ *    - Uses await => keep async
  */
 export const ArrowAndBackspace: Story = {
   args: {
@@ -129,12 +138,12 @@ export const ArrowAndBackspace: Story = {
     const canvas = within(canvasElement)
 
     // Start with the first digit
-    const input1 = canvas.getByLabelText(`Code Digit 1`) as HTMLInputElement
+    const input1 = canvas.getByLabelText(`Code Digit 1`, { selector: 'input' })
     await userEvent.click(input1)
     // Type "1"
     await userEvent.keyboard('1')
     // Should auto-focus the second digit
-    const input2 = canvas.getByLabelText(`Code Digit 2`) as HTMLInputElement
+    const input2 = canvas.getByLabelText(`Code Digit 2`, { selector: 'input' })
     expect(input2).toHaveFocus()
     // Type "2"
     await userEvent.keyboard('2')
@@ -145,17 +154,17 @@ export const ArrowAndBackspace: Story = {
 
     // Press backspace to clear first digit
     await userEvent.keyboard('{backspace}')
-    expect(input1.value).toBe('')
-    // Should remain on first input (after clearing)
+    expect(input1).toHaveValue('')
+    // Should remain on first input
     expect(input1).toHaveFocus()
 
     // Type "9"
     await userEvent.keyboard('9')
-    expect(input1.value).toBe('9')
+    expect(input1).toHaveValue('9')
 
     // Move to second input, confirm "2" is still there
     await userEvent.keyboard('{arrowright}')
     expect(input2).toHaveFocus()
-    expect(input2.value).toBe('2')
+    expect(input2).toHaveValue('2')
   },
 }

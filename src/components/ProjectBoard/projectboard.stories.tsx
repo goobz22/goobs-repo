@@ -1,6 +1,5 @@
 // src/components/ProjectBoard/projectboard.stories.tsx
 
-import React from 'react'
 import { Meta, StoryObj } from '@storybook/react'
 import { userEvent, within, expect } from '@storybook/test'
 import ProjectBoard, {
@@ -39,7 +38,6 @@ type Story = StoryObj<typeof ProjectBoard>
 
 /**
  * Sample "raw" data arrays to pass into ProjectBoard or popups.
- * Adjust these as needed for your environment.
  */
 const sampleStatuses: RawStatus[] = [
   { _id: 'stat-1', status: 'Open', description: 'Open tasks' },
@@ -114,7 +112,6 @@ const sampleTasks: Task[] = [
 
 /**
  * Some sample columns for each board type scenario.
- * For example, if boardType = "status", we have columns with _ids that match the statuses.
  */
 const sampleStatusColumns = [
   { _id: 'stat-1', title: 'Open', description: 'Open tasks or tickets' },
@@ -139,7 +136,7 @@ const sampleTopicColumns = [
 export const BasicStatusBoard: Story = {
   name: 'Basic Board (Status-based)',
   args: {
-    variant: 'company', // or "administrator"/"customer"
+    variant: 'company',
     boardType: 'status',
     company: sampleCompany,
     columns: sampleStatusColumns,
@@ -164,13 +161,12 @@ export const BasicStatusBoard: Story = {
 
     // Try selecting a task
     await userEvent.click(canvas.getByText('Fix login bug'))
-    // We might add an assertion that something changed visually,
-    // but for now we just confirm the click doesn't crash.
   },
 }
 
 /**
  * 2) Severity-based board
+ *    No user interactions => remove `async`.
  */
 export const SeverityBoard: Story = {
   name: 'Severity Board',
@@ -195,7 +191,7 @@ export const SeverityBoard: Story = {
       )
     },
   } as ProjectBoardProps,
-  play: async ({ canvasElement }) => {
+  play: ({ canvasElement }) => {
     const canvas = within(canvasElement)
     // Check for columns "Low" / "High"
     expect(canvas.getByText('Low')).toBeInTheDocument()
@@ -205,6 +201,7 @@ export const SeverityBoard: Story = {
 
 /**
  * 3) SubStatus-based board
+ *    No user interactions => no `play` needed.
  */
 export const SubStatusBoard: Story = {
   name: 'SubStatus Board',
@@ -227,6 +224,7 @@ export const SubStatusBoard: Story = {
 
 /**
  * 4) Topic-based board
+ *    No user interactions => no `play` needed.
  */
 export const TopicBoard: Story = {
   name: 'Topic Board',
@@ -249,18 +247,17 @@ export const TopicBoard: Story = {
 
 /* --------------------------------------------------------------------------
    POPUP COMPONENT STORIES
-   Since we only have one default export (ProjectBoard),
-   we create "stories" that override `render:()` to show each popup alone.
-   We'll pass in minimal props to demonstrate usage.
+   We'll pass in minimal props to demonstrate usage. 
+   We override `render` to show each popup alone (AddTask, ManageTask, ShowTask).
 ------------------------------------------------------------------------- */
 
 /**
  * 5) AddTask (standalone)
+ *    We do use user interactions => keep async.
  */
 export const AddTaskPopup: StoryObj = {
   name: 'AddTask Popup (Standalone)',
-  // We override the render function to show AddTask instead of ProjectBoard
-  render: args => {
+  render: () => {
     const props: AddTaskProps = {
       open: true,
       onClose: () => console.log('AddTask onClose'),
@@ -279,7 +276,7 @@ export const AddTaskPopup: StoryObj = {
     }
     return <AddTask {...props} />
   },
-  play: async ({ canvasElement }: { canvasElement: HTMLElement }) => {
+  play: async ({ canvasElement }) => {
     const canvas = within(canvasElement)
     // Check the presence of the "Submit" button
     expect(canvas.getByRole('button', { name: /Submit/i })).toBeInTheDocument()
@@ -292,6 +289,7 @@ export const AddTaskPopup: StoryObj = {
 
 /**
  * 6) ManageTask (standalone)
+ *    We do user interactions => keep async.
  */
 export const ManageTaskPopup: StoryObj = {
   name: 'ManageTask Popup (Standalone)',
@@ -323,7 +321,7 @@ export const ManageTaskPopup: StoryObj = {
     }
     return <ManageTask {...props} />
   },
-  play: async ({ canvasElement }: { canvasElement: HTMLElement }) => {
+  play: async ({ canvasElement }) => {
     const canvas = within(canvasElement)
     // Confirm "Existing Task Title" in the Title field
     const titleField = canvas.getByLabelText('Task Title')
@@ -337,6 +335,7 @@ export const ManageTaskPopup: StoryObj = {
 
 /**
  * 7) ShowTask (standalone)
+ *    We do user interactions => keep async.
  */
 export const ShowTaskPopup: StoryObj = {
   name: 'ShowTask Popup (Standalone)',
@@ -370,7 +369,7 @@ export const ShowTaskPopup: StoryObj = {
     }
     return <ShowTask {...props} />
   },
-  play: async ({ canvasElement }: { canvasElement: HTMLElement }) => {
+  play: async ({ canvasElement }) => {
     const canvas = within(canvasElement)
 
     // Check for the title text

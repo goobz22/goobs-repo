@@ -1,10 +1,8 @@
 // src/components/SearchableDropdown/searchabledropdown.stories.tsx
 
-import React from 'react'
 import { Meta, StoryObj } from '@storybook/react'
 import { userEvent, within, expect } from '@storybook/test'
 import SearchableDropdown from './index'
-import { SearchableDropdownProps } from './index'
 
 /**
  * Reusable list of options for demonstration.
@@ -40,6 +38,7 @@ type Story = StoryObj<typeof SearchableDropdown>
 
 /**
  * 1) Basic usage
+ *    Uses userEvent => keep `async`.
  */
 export const Basic: Story = {
   args: {
@@ -47,25 +46,26 @@ export const Basic: Story = {
     options: sampleOptions,
     placeholder: 'Start typing...',
   },
-  play: async ({ canvasElement }: { canvasElement: HTMLElement }) => {
+  play: async ({ canvasElement }) => {
     const canvas = within(canvasElement)
 
     // Check for the label
     expect(canvas.getByText('Basic SearchableDropdown')).toBeInTheDocument()
 
-    // Click the input
+    // Click into the input
     const input = canvas.getByRole('combobox')
     await userEvent.click(input)
 
-    // Attempt to type a partial match
+    // Type a partial match
     await userEvent.type(input, 'car')
-    // 'carrot' should appear among the options
+    // 'carrot' should appear
     expect(canvas.getByText('carrot')).toBeInTheDocument()
   },
 }
 
 /**
  * 2) With defaultValue
+ *    No user interactions => remove `async`.
  */
 export const WithDefaultValue: Story = {
   args: {
@@ -73,16 +73,17 @@ export const WithDefaultValue: Story = {
     options: sampleOptions,
     defaultValue: 'banana',
   },
-  play: async ({ canvasElement }: { canvasElement: HTMLElement }) => {
+  play: ({ canvasElement }) => {
     const canvas = within(canvasElement)
-    // Expect the input to show the default item
-    const input = canvas.getByRole('combobox') as HTMLInputElement
-    expect(input.value).toMatch(/banana/i)
+    // Expect the combobox to show the default item
+    const input = canvas.getByRole('combobox')
+    expect(input).toHaveValue('banana')
   },
 }
 
 /**
  * 3) Options with Complex Attributes
+ *    Uses userEvent => keep `async`.
  */
 export const ComplexAttributes: Story = {
   args: {
@@ -106,9 +107,9 @@ export const ComplexAttributes: Story = {
     ],
     placeholder: 'Search items...',
   },
-  play: async ({ canvasElement }: { canvasElement: HTMLElement }) => {
+  play: async ({ canvasElement }) => {
     const canvas = within(canvasElement)
-    // Try opening the dropdown
+    // Open the dropdown
     const input = canvas.getByRole('combobox')
     await userEvent.click(input)
     // item1, item2, item3 should be visible
@@ -119,6 +120,7 @@ export const ComplexAttributes: Story = {
 
 /**
  * 4) Error State
+ *    No user interactions => remove `async`.
  */
 export const ErrorState: Story = {
   args: {
@@ -127,7 +129,7 @@ export const ErrorState: Story = {
     error: true,
     helperText: 'Something went wrong!',
   },
-  play: async ({ canvasElement }) => {
+  play: ({ canvasElement }) => {
     const canvas = within(canvasElement)
     // Confirm the helper text
     expect(canvas.getByText('Something went wrong!')).toBeInTheDocument()
@@ -136,6 +138,7 @@ export const ErrorState: Story = {
 
 /**
  * 5) Required Dropdown
+ *    No user interactions => remove `async`.
  */
 export const RequiredField: Story = {
   args: {
@@ -143,7 +146,7 @@ export const RequiredField: Story = {
     options: sampleOptions,
     required: true,
   },
-  play: async ({ canvasElement }) => {
+  play: ({ canvasElement }) => {
     const canvas = within(canvasElement)
     // Check that label is present
     expect(canvas.getByText('Required Dropdown')).toBeInTheDocument()
@@ -152,6 +155,7 @@ export const RequiredField: Story = {
 
 /**
  * 6) Custom Colors
+ *    Uses userEvent => keep `async`.
  */
 export const CustomColors: Story = {
   args: {
@@ -177,6 +181,7 @@ export const CustomColors: Story = {
 
 /**
  * 7) Searching & Selecting
+ *    Uses userEvent => keep `async`.
  */
 export const SearchAndSelect: Story = {
   args: {
@@ -188,7 +193,7 @@ export const SearchAndSelect: Story = {
     const canvas = within(canvasElement)
 
     // Focus and type a partial search
-    const input = canvas.getByRole('combobox') as HTMLInputElement
+    const input = canvas.getByRole('combobox')
     await userEvent.click(input)
     await userEvent.type(input, 'avo')
 
@@ -199,13 +204,14 @@ export const SearchAndSelect: Story = {
     // Click the option
     await userEvent.click(avocadoOption)
 
-    // Now the input value should be "avocado"
-    expect(input.value).toMatch(/avocado/i)
+    // Now the combobox value should be "avocado"
+    expect(input).toHaveValue('avocado')
   },
 }
 
 /**
  * 8) No Options scenario
+ *    Uses userEvent => keep `async`.
  */
 export const NoOptions: Story = {
   args: {

@@ -10,7 +10,7 @@ import Dropdown from '../Dropdown'
 import CustomGrid from './../../components/Grid'
 import { columnconfig, gridconfig } from './../../components/Grid/'
 import defaultConfig from './defaultconfig'
-import { useRouter } from 'next/navigation'
+// import { useRouter } from 'next/navigation'  <-- REMOVED!
 import {
   black,
   white,
@@ -41,6 +41,10 @@ interface Feature {
   tiedtopackage?: TiedToPackage
 }
 
+/**
+ * Optional router prop, so parent can pass in their router instance if desired.
+ * If provided, PricingTable will use router.push(...) for navigation.
+ */
 export interface PricingProps {
   headerGridConfig?: gridconfig
   tabletitle?: {
@@ -67,10 +71,19 @@ export interface PricingProps {
     buttonlinks?: string[]
     columnconfig?: columnconfig
   }
+  /**
+   * The router object with a `.push()` method.
+   * In Next.js, this would typically come from `useRouter()` in the parent.
+   */
+  router?: {
+    push(url: string): void
+  }
 }
 
 const PricingTable: React.FC<PricingProps> = props => {
-  const router = useRouter()
+  // Removed: const router = useRouter()
+  const { router } = props
+
   const [selectedPackageIndex, setSelectedPackageIndex] = useState(0)
   const [selectedPackage, setSelectedPackage] = useState('')
   const [isLoading, setIsLoading] = useState(true)
@@ -129,7 +142,6 @@ const PricingTable: React.FC<PricingProps> = props => {
     if (config.packagecolumns && config.packagecolumns.columnconfig) {
       headerColumnConfigs.push({
         ...config.packagecolumns.columnconfig,
-        // Add 5px margin above (margintop: 0.625) and to the right (marginright: 0.625)
         margintop: 1,
         marginright: 0.625,
         component: (
@@ -297,7 +309,14 @@ const PricingTable: React.FC<PricingProps> = props => {
             backgroundcolor={black.main}
             href={buttonLink}
             width="100%"
-            onClick={() => router.push(buttonLink)}
+            onClick={() => {
+              // Use passed-in router, if provided
+              if (router) {
+                router.push(buttonLink)
+              } else {
+                console.warn('No router provided; skipping navigation.')
+              }
+            }}
             text={
               config.buttoncolumns.buttontexts?.[selectedPackageIndex] || ''
             }

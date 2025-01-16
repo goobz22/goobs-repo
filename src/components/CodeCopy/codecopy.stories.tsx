@@ -1,6 +1,6 @@
 // src/components/CodeCopy/codecopy.stories.tsx
 
-import React from 'react'
+// Remove `import React from 'react'` because it's unused
 import { Meta, StoryObj } from '@storybook/react'
 import { within, userEvent, expect } from '@storybook/test'
 import CodeCopy from './index'
@@ -34,6 +34,7 @@ type Story = StoryObj<typeof CodeCopy>
 
 /**
  * 1) Basic example with JavaScript code
+ *    - We do `await userEvent.click()`, so keep `async`.
  */
 export const BasicCode: Story = {
   args: {
@@ -42,7 +43,7 @@ export const BasicCode: Story = {
 }`,
     language: 'javascript',
   },
-  play: async ({ canvasElement }: { canvasElement: HTMLElement }) => {
+  play: async ({ canvasElement }) => {
     const canvas = within(canvasElement)
     // Check that the code text appears
     expect(canvas.getByText(/function greet/)).toBeInTheDocument()
@@ -50,12 +51,13 @@ export const BasicCode: Story = {
     // Try copying
     const copyButton = canvas.getByRole('button', { name: /copy code/i })
     await userEvent.click(copyButton)
-    // (Optional) Confirm "Code copied" is logged or mock out document.execCommand
+    // (Optional) Confirm "Code copied" message or other side effects
   },
 }
 
 /**
  * 2) TypeScript code sample
+ *    - No `await`, so remove `async`.
  */
 export const TypeScriptExample: Story = {
   args: {
@@ -66,7 +68,7 @@ export const TypeScriptExample: Story = {
 const user: Person = { name: "Alice", age: 25 };`,
     language: 'typescript',
   },
-  play: async ({ canvasElement }: { canvasElement: HTMLElement }) => {
+  play: ({ canvasElement }) => {
     const canvas = within(canvasElement)
     // Check that the interface text appears
     expect(canvas.getByText(/interface Person/)).toBeInTheDocument()
@@ -75,6 +77,7 @@ const user: Person = { name: "Alice", age: 25 };`,
 
 /**
  * 3) JSON code sample
+ *    - No `await`, so remove `async`.
  */
 export const JSONExample: Story = {
   args: {
@@ -85,7 +88,7 @@ export const JSONExample: Story = {
 }`,
     language: 'json',
   },
-  play: async ({ canvasElement }: { canvasElement: HTMLElement }) => {
+  play: ({ canvasElement }) => {
     const canvas = within(canvasElement)
     // Confirm we see the JSON content
     expect(canvas.getByText(/"name": "example"/)).toBeInTheDocument()
@@ -94,6 +97,7 @@ export const JSONExample: Story = {
 
 /**
  * 4) Large Code Block
+ *    - No `await`, so remove `async`.
  */
 export const LargeCodeBlock: Story = {
   args: {
@@ -116,7 +120,7 @@ class Test {
 }`,
     language: 'javascript',
   },
-  play: async ({ canvasElement }: { canvasElement: HTMLElement }) => {
+  play: ({ canvasElement }) => {
     const canvas = within(canvasElement)
     // Just check for a piece of text
     expect(canvas.getByText(/A large sample of code/)).toBeInTheDocument()

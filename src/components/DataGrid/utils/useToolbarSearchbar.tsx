@@ -4,13 +4,12 @@ import React, { useCallback, useMemo, useState, useEffect } from 'react'
 import type { ColumnDef, RowData } from '../types'
 import type { SearchbarProps } from '../../Searchbar'
 
-// If you'd like to pass more config (e.g., for toggling columns), you can expand this interface
 interface UseSearchbarProps {
   columns: ColumnDef[]
   rows: RowData[]
-  // Optional: This can merge the parent's SearchbarProps, so we pass it through in updatedSearchbarProps.
+  /** Optional: merges the parent's SearchbarProps, so we pass them through. */
   searchbarProps?: Omit<SearchbarProps, 'onChange' | 'value'>
-  // A function to update column visibility (Jotai in your case). If omitted, no column toggling occurs.
+  /** If provided, we update column visibility (e.g. via Jotai). */
   updateVisibility?: (action: {
     type: 'save'
     newState: Record<string, boolean>
@@ -18,12 +17,46 @@ interface UseSearchbarProps {
 }
 
 /**
+ * Safely convert a cell value to a lowercase string without using the default
+ * `[object Object]` format for objects.
+ */
+function toLowerCaseString(value: unknown): string {
+  // 1. Null or undefined => empty string
+  if (value == null) {
+    return ''
+  }
+
+  // 2. Objects/arrays => JSON-stringify safely
+  if (typeof value === 'object') {
+    try {
+      return JSON.stringify(value).toLowerCase()
+    } catch {
+      // If there's a circular reference or another error, return empty
+      return ''
+    }
+  }
+
+  // 3. Strings => just lowercase
+  if (typeof value === 'string') {
+    return value.toLowerCase()
+  }
+
+  // 4. Numbers and booleans => safe to convert
+  if (typeof value === 'number' || typeof value === 'boolean') {
+    return String(value).toLowerCase()
+  }
+
+  // 5. Anything else (symbols, functions, etc.) => empty string
+  return ''
+}
+
+/**
  * A custom hook that manages:
- * - The local searchValue state
- * - Generating tags from that searchValue
+ * - Local searchValue state
+ * - Splitting that searchValue into "tags"
  * - Filtering rows based on search terms
- * - Determining which columns should be visible based on search matches
- * - Optionally updating column visibility (if `updateVisibility` is provided)
+ * - Determining which columns should be visible
+ * - Optionally updating column visibility
  */
 export const useSearchbar = ({
   columns,
@@ -37,7 +70,6 @@ export const useSearchbar = ({
   // Derived "tags" array from the current searchValue
   const [tags, setTags] = useState<string[]>([])
 
-  // Whenever searchValue changes, split it into tags (space-delimited)
   useEffect(() => {
     setTags(searchValue.trim() ? searchValue.toLowerCase().split(' ') : [])
   }, [searchValue])
@@ -45,37 +77,33 @@ export const useSearchbar = ({
   // Handler for the text input's onChange
   const handleSearchChange = useCallback(
     (event: React.ChangeEvent<HTMLInputElement>) => {
-      const newValue = event.target.value
-      setSearchValue(newValue)
+      setSearchValue(event.target.value)
     },
     []
   )
 
   // Filter the rows based on the current tags
   const filteredRows = useMemo(() => {
-    if (!searchValue.trim()) {
-      return rows
-    }
+    if (!searchValue.trim()) return rows
 
     const searchTerms = searchValue.toLowerCase().trim().split(' ')
 
-    return rows.filter(row => {
+    return rows.filter(row =>
       // A row matches if ANY of the searchTerms match ANY column
-      return searchTerms.some(term => {
-        return columns.some(column => {
+      searchTerms.some(term =>
+        columns.some(column => {
           // Check column header text
           const headerMatch = column.headerName?.toLowerCase().includes(term)
           // Check column field name
           const fieldMatch = column.field.toLowerCase().includes(term)
-          // Check the cell's value
-          const cellValue = row[column.field]
-          const cellMatch =
-            cellValue != null && String(cellValue).toLowerCase().includes(term)
+          // Check the cell's value (safely)
+          const cellText = toLowerCaseString(row[column.field])
+          const cellMatch = cellText.includes(term)
 
           return headerMatch || fieldMatch || cellMatch
         })
-      })
-    })
+      )
+    )
   }, [rows, searchValue, columns])
 
   // Determine which columns should remain visible based on the current search
@@ -86,35 +114,30 @@ export const useSearchbar = ({
     }
 
     const searchTerms = searchValue.toLowerCase().trim().split(' ')
-
     return new Set(
       columns
-        .filter(col => {
+        .filter(col =>
           // A column is "visible" if ANY search term matches:
-          //  (a) the column header
-          //  (b) the column field name
-          //  (c) at least one row's cell in that column
-          return searchTerms.some(term => {
+          // (a) the column header
+          // (b) the column field name
+          // (c) at least one row's cell in that column
+          searchTerms.some(term => {
             const headerMatch = col.headerName?.toLowerCase().includes(term)
             const fieldMatch = col.field.toLowerCase().includes(term)
             const hasMatchingData = filteredRows.some(row => {
-              const cellValue = row[col.field]
-              return (
-                cellValue != null &&
-                String(cellValue).toLowerCase().includes(term)
-              )
+              const cellText = toLowerCaseString(row[col.field])
+              return cellText.includes(term)
             })
-
             return headerMatch || fieldMatch || hasMatchingData
           })
-        })
+        )
         .map(col => col.field)
     )
   }, [columns, searchValue, filteredRows])
 
   // If the user typed something (tags exist), optionally update global column visibility
   useEffect(() => {
-    if (!updateVisibility) return // Only run if we have an update function
+    if (!updateVisibility) return
     if (tags.length === 0) return // If no tags, do nothing here
 
     const newVisibility: Record<string, boolean> = {}

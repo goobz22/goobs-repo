@@ -1,4 +1,3 @@
-// src\components\ProjectBoard\AddTask\client.tsx
 'use client'
 
 import React, { useState, useEffect } from 'react'
@@ -12,7 +11,7 @@ import {
 
 // Custom components
 import CustomButton from '../../Button'
-import Dropdown, { DropdownOption } from '../../Dropdown'
+import Dropdown from '../../Dropdown'
 import TextField from '../../TextField'
 import ComplexTextEditor from '../../ComplexTextEditor'
 import TransferList from '../../TransferList'
@@ -106,37 +105,22 @@ const AddTask: React.FC<AddTaskProps> = ({
   // -------------------------------------------------------------------------
   // 3) Convert raw data to dropdown-friendly arrays
   // -------------------------------------------------------------------------
-  const severityOptions: DropdownOption[] = severityLevels.map(sl => ({
+  const severityOptions = severityLevels.map(sl => ({
     value: String(sl.severityLevel), // or sl._id if you prefer
   }))
-
-  const statusOptions: DropdownOption[] = statuses.map(s => ({
-    value: s.status,
-  }))
-
-  const subStatusOptions: DropdownOption[] = subStatuses.map(s => ({
-    value: s.subStatus,
-  }))
-
-  const queueOptions: DropdownOption[] = schedulingQueues.map(q => ({
-    value: q.queueName,
-  }))
-
-  const customerOptions: DropdownOption[] = customers.map(c => ({
+  const statusOptions = statuses.map(s => ({ value: s.status }))
+  const subStatusOptions = subStatuses.map(s => ({ value: s.subStatus }))
+  const queueOptions = schedulingQueues.map(q => ({ value: q.queueName }))
+  const customerOptions = customers.map(c => ({
     value: c._id || '',
     attribute1: [c.firstName, c.lastName].filter(Boolean).join(' '),
   }))
-
-  const employeeOptions: DropdownOption[] = employees.map(e => ({
+  const employeeOptions = employees.map(e => ({
     value: e._id || '',
     attribute1: [e.firstName, e.lastName].filter(Boolean).join(' '),
   }))
-
-  // If you have actual "company accounts," map them too. For now, we use placeholders:
-  const companyAccountOptions: DropdownOption[] = [
-    { value: 'AcmeInc' },
-    { value: 'TechCorp' },
-  ]
+  // If you have actual "company accounts," map them too. For now, placeholders:
+  const companyAccountOptions = [{ value: 'AcmeInc' }, { value: 'TechCorp' }]
 
   // -------------------------------------------------------------------------
   // 4) TransferList Handler
@@ -152,16 +136,10 @@ const AddTask: React.FC<AddTaskProps> = ({
   const handleSubmit = () => {
     // Build an Omit<Task, '_id'> to pass upward
     const newTaskData: Omit<Task, '_id'> = {
-      // We store the final text from these fields
       title: taskTitle,
       description: taskDescription,
-
-      // If you want to store the "account" or "employee" or "admin" IDs, do it here
-      // e.g. if "selectedAccount" is a customer ID, store "customerId: selectedAccount"
-      // but that depends on your real app logic.
-
-      // We'll store "topics" as string => you might store actual IDs if you prefer
       topicIds: assignedTopics,
+      // For real usage, add fields like severity or queue as you need
     }
 
     onSubmit(newTaskData)
@@ -191,14 +169,14 @@ const AddTask: React.FC<AddTaskProps> = ({
                 name="customerAccount"
                 options={customerOptions}
                 value={selectedAccount}
-                onChange={e => setSelectedAccount(e.target.value as string)}
+                onChange={e => setSelectedAccount(e.target.value)}
               />
               <Dropdown
                 label="Assigned Employee"
                 name="assignedEmployee"
                 options={employeeOptions}
                 value={selectedEmployee}
-                onChange={e => setSelectedEmployee(e.target.value as string)}
+                onChange={e => setSelectedEmployee(e.target.value)}
               />
             </>
           )}
@@ -211,58 +189,52 @@ const AddTask: React.FC<AddTaskProps> = ({
                 name="companyAccount"
                 options={companyAccountOptions}
                 value={selectedAccount}
-                onChange={e => setSelectedAccount(e.target.value as string)}
+                onChange={e => setSelectedAccount(e.target.value)}
               />
               <Dropdown
                 label="Assigned Administrator"
                 name="assignedAdministrator"
                 options={employeeOptions} // or a separate "administrators" array
                 value={selectedAdministrator}
-                onChange={e =>
-                  setSelectedAdministrator(e.target.value as string)
-                }
+                onChange={e => setSelectedAdministrator(e.target.value)}
               />
             </>
           )}
 
           {/* ============== For "administrator" variant ============== */}
-          {/* In "administrator," we do NOT show a "customer" or "company" field. */}
           {variant === 'administrator' && (
-            // Placeholder. If you need any specialized fields, put them here or omit entirely.
+            // Placeholder. If you need specialized fields, add them here
             <></>
           )}
 
-          {/* Now the next row: Severity, Queue, Status, Substatus (all variants can share) */}
+          {/* Now the next row: Severity, Queue, Status, Substatus (all variants) */}
           <Dropdown
             label="Severity Level"
             name="severityLevel"
             options={severityOptions}
             value={selectedSeverity}
-            onChange={e => setSelectedSeverity(e.target.value as string)}
+            onChange={e => setSelectedSeverity(e.target.value)}
           />
-
           <Dropdown
             label="Associated Product (Queue)"
             name="associatedQueue"
             options={queueOptions}
             value={selectedQueue}
-            onChange={e => setSelectedQueue(e.target.value as string)}
+            onChange={e => setSelectedQueue(e.target.value)}
           />
-
           <Dropdown
             label="Status"
             name="status"
             options={statusOptions}
             value={selectedStatus}
-            onChange={e => setSelectedStatus(e.target.value as string)}
+            onChange={e => setSelectedStatus(e.target.value)}
           />
-
           <Dropdown
             label="Substatus"
             name="substatus"
             options={subStatusOptions}
             value={selectedSubStatus}
-            onChange={e => setSelectedSubStatus(e.target.value as string)}
+            onChange={e => setSelectedSubStatus(e.target.value)}
           />
         </Box>
 
@@ -283,7 +255,6 @@ const AddTask: React.FC<AddTaskProps> = ({
           value={taskTitle}
           onChange={e => setTaskTitle(e.target.value)}
         />
-
         <Box sx={{ mt: 2 }}>
           <ComplexTextEditor
             value={taskDescription}

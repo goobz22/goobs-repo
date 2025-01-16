@@ -1,6 +1,6 @@
 // src/components/Card/card.stories.tsx
 
-import React from 'react'
+// Removed "import React from 'react'" because it's unused
 import { Meta, StoryObj } from '@storybook/react'
 import { userEvent, within, expect } from '@storybook/test'
 import Card from './index'
@@ -46,7 +46,8 @@ export const DefaultBasic: Story = {
     title: 'Basic Default Card',
     body: 'This is a basic default card with only title and body.',
   } as CardProps,
-  play: async ({ canvasElement }) => {
+  // No user actions => remove 'async'
+  play: ({ canvasElement }) => {
     const canvas = within(canvasElement)
     // Title should be visible
     expect(canvas.getByText('Basic Default Card')).toBeInTheDocument()
@@ -69,7 +70,8 @@ export const DefaultWithImageTop: Story = {
     image: sampleImage,
     imagePosition: 'top',
   } as CardProps,
-  play: async ({ canvasElement }) => {
+  // No user actions => remove 'async'
+  play: ({ canvasElement }) => {
     const canvas = within(canvasElement)
     // Title should be visible
     expect(canvas.getByText('Card with Top Image')).toBeInTheDocument()
@@ -96,13 +98,14 @@ export const DefaultWithImageLeftFavBreadcrumb: Story = {
     childLink: '/dashboard/section',
     grandchildLink: '/dashboard/section/item',
   } as CardProps,
-  play: async ({ canvasElement }) => {
+  // No user actions => remove 'async'
+  play: ({ canvasElement }) => {
     const canvas = within(canvasElement)
     // Title and body
     expect(canvas.getByText('Card with Image Left')).toBeInTheDocument()
     // We see "Dashboard" breadcrumb
     expect(canvas.getByText('Dashboard')).toBeInTheDocument()
-    // Check favorite icon presence (depends on your FavoriteIcon implementation)
+    // Check favorite icon presence if needed
   },
 }
 
@@ -139,7 +142,8 @@ export const DefaultWithStepper: Story = {
       },
     ],
   } as CardProps,
-  play: async ({ canvasElement }) => {
+  // No user actions => remove 'async'
+  play: ({ canvasElement }) => {
     const canvas = within(canvasElement)
     // Title
     expect(canvas.getByText('Card with Stepper')).toBeInTheDocument()
@@ -168,7 +172,8 @@ export const InventoryVariant: Story = {
     width: '600px',
     height: '240px',
   } as CardProps,
-  play: async ({ canvasElement }) => {
+  // No user actions => remove 'async'
+  play: ({ canvasElement }) => {
     const canvas = within(canvasElement)
     // Check for license text
     expect(canvas.getByText(/License: Single-Use/i)).toBeInTheDocument()
@@ -179,6 +184,7 @@ export const InventoryVariant: Story = {
 
 /**
  * 6) Pricing Summary variant (SimplePricingSummary)
+ *    We DO use userEvent, so keep 'async' and use 'await'.
  */
 export const SimplePricingSummaryVariant: Story = {
   args: {
@@ -206,12 +212,12 @@ export const SimplePricingSummaryVariant: Story = {
     // Click "Proceed"
     const proceedButton = canvas.getByRole('button', { name: 'Proceed' })
     await userEvent.click(proceedButton)
-    // There's no direct "expect" here (alert is triggered).
   },
 }
 
 /**
  * 7) Detailed Pricing Summary variant
+ *    We use userEvent, so keep 'async' and 'await'.
  */
 export const DetailedPricingSummaryVariant: Story = {
   args: {
@@ -240,14 +246,16 @@ export const DetailedPricingSummaryVariant: Story = {
     expect(canvas.getByText('Example Vendor LLC')).toBeInTheDocument()
 
     // Try button
-    const confirmBtn = canvas.getByRole('button', { name: /confirm purchase/i })
+    const confirmBtn = canvas.getByRole('button', {
+      name: /confirm purchase/i,
+    })
     await userEvent.click(confirmBtn)
   },
 }
 
 /**
  * 8) Product variant
- *    We fixed the CardProps so productProps can have onLivePreview
+ *    We use userEvent, so keep 'async' and 'await'.
  */
 export const ProductVariant: Story = {
   args: {
@@ -280,6 +288,7 @@ export const ProductVariant: Story = {
 
 /**
  * 9) Product Summary variant
+ *    We use userEvent to toggle monthly/annual, so keep 'async' and 'await'.
  */
 export const ProductSummaryVariant: Story = {
   args: {
@@ -324,6 +333,7 @@ export const ProductSummaryVariant: Story = {
 
 /**
  * 10) Task variant
+ *     No user events => remove 'async'
  */
 export const TaskVariant: Story = {
   args: {
@@ -343,15 +353,15 @@ export const TaskVariant: Story = {
     width: '400px',
     height: 'auto',
   } as CardProps,
-  play: async ({ canvasElement }) => {
+  play: ({ canvasElement }) => {
     const canvas = within(canvasElement)
     // Check for text
     expect(canvas.getByText('My Task')).toBeInTheDocument()
     expect(canvas.getByText('Complete the documentation.')).toBeInTheDocument()
 
-    // If your TaskCard includes a checkbox, we could do:
+    // If your TaskCard has a checkbox we want to test, we could do:
     // const checkbox = canvas.getByRole('checkbox')
-    // await userEvent.click(checkbox)
+    // userEvent.click(checkbox) // No async needed if we don't await
     // expect(checkbox).toBeChecked()
   },
 }

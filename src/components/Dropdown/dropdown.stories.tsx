@@ -1,9 +1,8 @@
 // src/components/Dropdown/dropdown.stories.tsx
 
-import React from 'react'
 import type { Meta, StoryObj } from '@storybook/react'
 import { userEvent, within, expect } from '@storybook/test'
-import Dropdown, { DropdownProps } from './index'
+import Dropdown from './index'
 
 /**
  * Setup story metadata

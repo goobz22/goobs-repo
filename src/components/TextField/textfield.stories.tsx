@@ -3,7 +3,7 @@
 import React from 'react'
 import type { Meta, StoryObj } from '@storybook/react'
 import { within, userEvent, expect } from '@storybook/test'
-import TextField, { TextFieldProps } from './index'
+import TextField from './index' // Removed: { TextFieldProps }
 import SearchIcon from '@mui/icons-material/Search'
 import { Box } from '@mui/material'
 
@@ -25,6 +25,7 @@ type Story = StoryObj<typeof TextField>
 
 /**
  * 1) Basic usage
+ *    We use `await userEvent.type(...)` => keep `async`.
  */
 export const Basic: Story = {
   args: {
@@ -38,30 +39,34 @@ export const Basic: Story = {
     expect(canvas.getByLabelText('Basic TextField')).toBeInTheDocument()
 
     // Type something
-    const input = canvas.getByLabelText('Basic TextField') as HTMLInputElement
+    const input = canvas.getByLabelText('Basic TextField', {
+      selector: 'input',
+    })
     await userEvent.type(input, 'Hello World')
-    expect(input.value).toBe('Hello World')
+    expect(input).toHaveValue('Hello World')
   },
 }
 
 /**
  * 2) Default Value
+ *    No user interaction => remove `async`.
  */
 export const WithDefaultValue: Story = {
   args: {
     label: 'Default Value',
     value: 'Pre-filled text',
   },
-  play: async ({ canvasElement }) => {
+  play: ({ canvasElement }) => {
     const canvas = within(canvasElement)
     // The input should have "Pre-filled text"
-    const input = canvas.getByLabelText('Default Value') as HTMLInputElement
-    expect(input.value).toBe('Pre-filled text')
+    const input = canvas.getByLabelText('Default Value', { selector: 'input' })
+    expect(input).toHaveValue('Pre-filled text')
   },
 }
 
 /**
  * 3) End Adornment (e.g., a search icon)
+ *    Uses userEvent => keep `async`.
  */
 export const WithEndAdornment: Story = {
   args: {
@@ -72,16 +77,17 @@ export const WithEndAdornment: Story = {
   },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement)
-    const input = canvas.getByLabelText('Search Field') as HTMLInputElement
+    const input = canvas.getByLabelText('Search Field', { selector: 'input' })
 
     // Type in the search field
     await userEvent.type(input, 'React')
-    expect(input.value).toBe('React')
+    expect(input).toHaveValue('React')
   },
 }
 
 /**
  * 4) No Outline
+ *    Uses userEvent => keep `async`.
  */
 export const OutlineNone: Story = {
   args: {
@@ -92,16 +98,17 @@ export const OutlineNone: Story = {
   },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement)
-    const input = canvas.getByLabelText('No Outline') as HTMLInputElement
+    const input = canvas.getByLabelText('No Outline', { selector: 'input' })
 
     // Type something
     await userEvent.type(input, 'Invisible border')
-    expect(input.value).toBe('Invisible border')
+    expect(input).toHaveValue('Invisible border')
   },
 }
 
 /**
  * 5) Custom Colors
+ *    Uses userEvent => keep `async`.
  */
 export const CustomColors: Story = {
   args: {
@@ -115,16 +122,19 @@ export const CustomColors: Story = {
   },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement)
-    const input = canvas.getByLabelText('Colored TextField') as HTMLInputElement
+    const input = canvas.getByLabelText('Colored TextField', {
+      selector: 'input',
+    })
 
     // Type some text
     await userEvent.type(input, 'Greenish')
-    expect(input.value).toBe('Greenish')
+    expect(input).toHaveValue('Greenish')
   },
 }
 
 /**
  * 6) Manual Typing
+ *    Uses userEvent => keep `async`.
  */
 export const ManualTyping: Story = {
   args: {
@@ -134,15 +144,16 @@ export const ManualTyping: Story = {
   },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement)
-    const input = canvas.getByLabelText('Manual Typing') as HTMLInputElement
+    const input = canvas.getByLabelText('Manual Typing', { selector: 'input' })
 
     await userEvent.type(input, '123abc')
-    expect(input.value).toBe('123abc')
+    expect(input).toHaveValue('123abc')
   },
 }
 
 /**
  * 7) Error State
+ *    Uses userEvent => keep `async`.
  */
 export const ErrorState: Story = {
   args: {
@@ -155,9 +166,9 @@ export const ErrorState: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement)
     // Type
-    const input = canvas.getByLabelText('Error Input') as HTMLInputElement
+    const input = canvas.getByLabelText('Error Input', { selector: 'input' })
     await userEvent.type(input, 'Oops...')
-    expect(input.value).toBe('Oops...')
+    expect(input).toHaveValue('Oops...')
 
     // Confirm the helper text
     expect(canvas.getByText('Error: invalid input')).toBeInTheDocument()
@@ -166,6 +177,7 @@ export const ErrorState: Story = {
 
 /**
  * 8) Disabled Field
+ *    No user interactions => remove `async`.
  */
 export const DisabledField: Story = {
   args: {
@@ -173,21 +185,21 @@ export const DisabledField: Story = {
     value: 'Cannot edit me',
     disabled: true,
   },
-  play: async ({ canvasElement }) => {
+  play: ({ canvasElement }) => {
     const canvas = within(canvasElement)
-    const input = canvas.getByLabelText(
-      'Disabled TextField'
-    ) as HTMLInputElement
+    const input = canvas.getByLabelText('Disabled TextField', {
+      selector: 'input',
+    })
 
     // Confirm it's disabled
     expect(input).toBeDisabled()
-    expect(input.value).toBe('Cannot edit me')
+    expect(input).toHaveValue('Cannot edit me')
   },
 }
 
 /**
  * 9) Shrunk Label Positions
- *    Demonstrates "onNotch" vs. "aboveNotch".
+ *    No user interactions => remove `async`.
  */
 export const ShrunkLabelPositions: Story = {
   render: () => (
@@ -204,7 +216,7 @@ export const ShrunkLabelPositions: Story = {
       />
     </Box>
   ),
-  play: async ({ canvasElement }) => {
+  play: ({ canvasElement }) => {
     const canvas = within(canvasElement)
     // We have two separate text fields labeled "On Notch Label" and "Above Notch Label".
     expect(canvas.getByLabelText('On Notch Label')).toBeInTheDocument()

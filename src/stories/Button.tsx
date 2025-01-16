@@ -1,5 +1,4 @@
 import React from 'react'
-
 import './button.css'
 
 export interface ButtonProps {
@@ -23,23 +22,26 @@ export const Button = ({
   label,
   ...props
 }: ButtonProps) => {
+  // Determine which CSS class to apply
   const mode = primary
     ? 'storybook-button--primary'
     : 'storybook-button--secondary'
+
+  // Use inline styles for background color
+  const inlineStyles: React.CSSProperties = {
+    backgroundColor,
+  }
+
   return (
     <button
       type="button"
       className={['storybook-button', `storybook-button--${size}`, mode].join(
         ' '
       )}
+      style={inlineStyles}
       {...props}
     >
       {label}
-      <style jsx>{`
-        button {
-          background-color: ${backgroundColor};
-        }
-      `}</style>
     </button>
   )
 }

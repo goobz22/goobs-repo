@@ -3,7 +3,7 @@
 import React from 'react'
 import { Meta, StoryObj } from '@storybook/react'
 import { within, userEvent, expect } from '@storybook/test'
-import StyledTooltip, { CustomTooltipProps } from './index'
+import StyledTooltip from './index'
 import { Box, Button } from '@mui/material'
 
 /**
@@ -119,7 +119,7 @@ export const MultipleTooltips: Story = {
       </StyledTooltip>
     </Box>
   ),
-  play: async ({ canvasElement }) => {
+  play: ({ canvasElement }) => {
     const canvas = within(canvasElement)
     // We can test the presence of the buttons
     expect(canvas.getByRole('button', { name: /first/i })).toBeInTheDocument()

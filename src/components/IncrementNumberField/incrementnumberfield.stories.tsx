@@ -1,10 +1,8 @@
 // src/components/IncrementNumberField/numberfield.stories.tsx
 
-import React from 'react'
-import { Meta, StoryObj } from '@storybook/react'
+import type { Meta, StoryObj } from '@storybook/react'
 import { within, userEvent, expect } from '@storybook/test'
 import IncrementNumberField from './index'
-import type { IncrementNumberFieldProps } from './index'
 
 /**
  * Setup Storybook metadata
@@ -24,6 +22,7 @@ type Story = StoryObj<typeof IncrementNumberField>
 
 /**
  * 1) Basic usage
+ *    - We call `await userEvent.click(...)`, so keep `async`.
  */
 export const Basic: Story = {
   name: 'Basic (Default)',
@@ -40,46 +39,45 @@ export const Basic: Story = {
     // Grab the textfield and buttons
     const decrementBtn = canvas.getByRole('button', { name: '-' })
     const incrementBtn = canvas.getByRole('button', { name: '+' })
-    const input = canvas.getByLabelText('Increment Number') as HTMLInputElement
+    const input = canvas.getByLabelText('Increment Number')
 
     // Initial should be "0"
-    expect(input.value).toBe('0')
+    expect(input).toHaveValue('0')
 
     // Click + once
     await userEvent.click(incrementBtn)
-    expect(input.value).toBe('1')
+    expect(input).toHaveValue('1')
 
     // Click - twice; it won't go below 0
     await userEvent.click(decrementBtn)
-    expect(input.value).toBe('0')
+    expect(input).toHaveValue('0')
 
     await userEvent.click(decrementBtn)
     // still "0"
-    expect(input.value).toBe('0')
+    expect(input).toHaveValue('0')
   },
 }
 
 /**
  * 2) With Initial Value
+ *    - No `await` usage => remove `async`.
  */
 export const WithInitialValue: Story = {
   args: {
     label: 'With Initial Value',
     initialValue: '5',
   },
-  play: async ({ canvasElement }) => {
+  play: ({ canvasElement }) => {
     const canvas = within(canvasElement)
-    const input = canvas.getByLabelText(
-      'With Initial Value'
-    ) as HTMLInputElement
-
+    const input = canvas.getByLabelText('With Initial Value')
     // Confirm initial
-    expect(input.value).toBe('5')
+    expect(input).toHaveValue('5')
   },
 }
 
 /**
  * 3) Manual Typing
+ *    - We do user interactions => keep `async`.
  */
 export const ManualTyping: Story = {
   args: {
@@ -88,10 +86,10 @@ export const ManualTyping: Story = {
   },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement)
-    const input = canvas.getByLabelText('Manual Typing') as HTMLInputElement
+    const input = canvas.getByLabelText('Manual Typing')
 
     // Should start at "10"
-    expect(input.value).toBe('10')
+    expect(input).toHaveValue('10')
 
     // Click into input and type "25"
     await userEvent.click(input)
@@ -100,12 +98,13 @@ export const ManualTyping: Story = {
     await userEvent.keyboard('25')
 
     // Now "25"
-    expect(input.value).toBe('25')
+    expect(input).toHaveValue('25')
   },
 }
 
 /**
  * 4) Custom Styles
+ *    - We do user interactions => keep `async`.
  */
 export const CustomStyles: Story = {
   args: {
@@ -117,20 +116,21 @@ export const CustomStyles: Story = {
   },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement)
-    const input = canvas.getByLabelText('Custom Colors') as HTMLInputElement
+    const input = canvas.getByLabelText('Custom Colors')
 
     // Verify initial value
-    expect(input.value).toBe('3')
+    expect(input).toHaveValue('3')
 
     // Increment
     const incrementBtn = canvas.getByRole('button', { name: '+' })
     await userEvent.click(incrementBtn)
-    expect(input.value).toBe('4')
+    expect(input).toHaveValue('4')
   },
 }
 
 /**
  * 5) Multiple Increments
+ *    - We do user interactions => keep `async`.
  */
 export const MultipleIncrements: Story = {
   args: {
@@ -139,7 +139,7 @@ export const MultipleIncrements: Story = {
   },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement)
-    const input = canvas.getByLabelText('Increments') as HTMLInputElement
+    const input = canvas.getByLabelText('Increments')
     const incrementBtn = canvas.getByRole('button', { name: '+' })
 
     // Press + five times
@@ -147,6 +147,6 @@ export const MultipleIncrements: Story = {
       await userEvent.click(incrementBtn)
     }
     // Expect "5"
-    expect(input.value).toBe('5')
+    expect(input).toHaveValue('5')
   },
 }

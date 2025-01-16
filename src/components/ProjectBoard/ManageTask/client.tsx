@@ -1,4 +1,3 @@
-// src\components\ProjectBoard\ManageTask\client.tsx
 'use client'
 
 import React, { useMemo, useState } from 'react'
@@ -212,7 +211,7 @@ const ManageTask: React.FC<ManageTaskProps> = ({
                   value: acc.companyName,
                 }))}
                 value={selectedCompany}
-                onChange={e => setSelectedCompany(e.target.value as string)}
+                onChange={e => setSelectedCompany(e.target.value)}
               />
 
               <Dropdown
@@ -222,7 +221,7 @@ const ManageTask: React.FC<ManageTaskProps> = ({
                   value: String(s.severityLevel),
                 }))}
                 value={selectedSeverity}
-                onChange={e => setSelectedSeverity(e.target.value as string)}
+                onChange={e => setSelectedSeverity(e.target.value)}
               />
 
               <Dropdown
@@ -230,7 +229,7 @@ const ManageTask: React.FC<ManageTaskProps> = ({
                 name="associatedQueue"
                 options={schedulingQueues.map(q => ({ value: q.queueName }))}
                 value={selectedQueue}
-                onChange={e => setSelectedQueue(e.target.value as string)}
+                onChange={e => setSelectedQueue(e.target.value)}
               />
 
               <Dropdown
@@ -238,9 +237,7 @@ const ManageTask: React.FC<ManageTaskProps> = ({
                 name="assignedAdministrator"
                 options={administrators.map(a => ({ value: a.fullName }))}
                 value={selectedAdministrator}
-                onChange={e =>
-                  setSelectedAdministrator(e.target.value as string)
-                }
+                onChange={e => setSelectedAdministrator(e.target.value)}
               />
 
               <Dropdown
@@ -248,7 +245,7 @@ const ManageTask: React.FC<ManageTaskProps> = ({
                 name="status"
                 options={statuses.map(s => ({ value: s.status }))}
                 value={selectedStatus}
-                onChange={e => setSelectedStatus(e.target.value as string)}
+                onChange={e => setSelectedStatus(e.target.value)}
               />
 
               <Dropdown
@@ -256,7 +253,7 @@ const ManageTask: React.FC<ManageTaskProps> = ({
                 name="substatus"
                 options={subStatuses.map(s => ({ value: s.subStatus }))}
                 value={selectedSubStatus}
-                onChange={e => setSelectedSubStatus(e.target.value as string)}
+                onChange={e => setSelectedSubStatus(e.target.value)}
               />
             </>
           )}
@@ -267,10 +264,9 @@ const ManageTask: React.FC<ManageTaskProps> = ({
               <Dropdown
                 label="Customer Account"
                 name="customerAccount"
-                // If you have real customers array, you can adapt; for now show "SampleAccount"
                 options={[{ value: 'SampleCustomerAccount' }]}
                 value={selectedCustomer}
-                onChange={e => setSelectedCustomer(e.target.value as string)}
+                onChange={e => setSelectedCustomer(e.target.value)}
               />
 
               <Dropdown
@@ -280,7 +276,7 @@ const ManageTask: React.FC<ManageTaskProps> = ({
                   value: String(s.severityLevel),
                 }))}
                 value={selectedSeverity}
-                onChange={e => setSelectedSeverity(e.target.value as string)}
+                onChange={e => setSelectedSeverity(e.target.value)}
               />
 
               <Dropdown
@@ -288,17 +284,17 @@ const ManageTask: React.FC<ManageTaskProps> = ({
                 name="associatedQueue"
                 options={schedulingQueues.map(q => ({ value: q.queueName }))}
                 value={selectedQueue}
-                onChange={e => setSelectedQueue(e.target.value as string)}
+                onChange={e => setSelectedQueue(e.target.value)}
               />
 
               <Dropdown
                 label="Assigned Employee"
                 name="assignedEmployee"
                 options={employees.map(emp => ({
-                  value: (emp.firstName || '') + ' ' + (emp.lastName || ''),
+                  value: `${emp.firstName ?? ''} ${emp.lastName ?? ''}`,
                 }))}
                 value={selectedEmployee}
-                onChange={e => setSelectedEmployee(e.target.value as string)}
+                onChange={e => setSelectedEmployee(e.target.value)}
               />
 
               <Dropdown
@@ -306,7 +302,7 @@ const ManageTask: React.FC<ManageTaskProps> = ({
                 name="status"
                 options={statuses.map(s => ({ value: s.status }))}
                 value={selectedStatus}
-                onChange={e => setSelectedStatus(e.target.value as string)}
+                onChange={e => setSelectedStatus(e.target.value)}
               />
 
               <Dropdown
@@ -314,7 +310,7 @@ const ManageTask: React.FC<ManageTaskProps> = ({
                 name="substatus"
                 options={subStatuses.map(s => ({ value: s.subStatus }))}
                 value={selectedSubStatus}
-                onChange={e => setSelectedSubStatus(e.target.value as string)}
+                onChange={e => setSelectedSubStatus(e.target.value)}
               />
             </>
           )}
@@ -329,7 +325,7 @@ const ManageTask: React.FC<ManageTaskProps> = ({
                   value: String(s.severityLevel),
                 }))}
                 value={selectedSeverity}
-                onChange={e => setSelectedSeverity(e.target.value as string)}
+                onChange={e => setSelectedSeverity(e.target.value)}
               />
 
               <Dropdown
@@ -337,7 +333,7 @@ const ManageTask: React.FC<ManageTaskProps> = ({
                 name="associatedQueue"
                 options={schedulingQueues.map(q => ({ value: q.queueName }))}
                 value={selectedQueue}
-                onChange={e => setSelectedQueue(e.target.value as string)}
+                onChange={e => setSelectedQueue(e.target.value)}
               />
 
               <Dropdown
@@ -345,7 +341,7 @@ const ManageTask: React.FC<ManageTaskProps> = ({
                 name="status"
                 options={statuses.map(s => ({ value: s.status }))}
                 value={selectedStatus}
-                onChange={e => setSelectedStatus(e.target.value as string)}
+                onChange={e => setSelectedStatus(e.target.value)}
               />
 
               <Dropdown
@@ -353,7 +349,7 @@ const ManageTask: React.FC<ManageTaskProps> = ({
                 name="substatus"
                 options={subStatuses.map(s => ({ value: s.subStatus }))}
                 value={selectedSubStatus}
-                onChange={e => setSelectedSubStatus(e.target.value as string)}
+                onChange={e => setSelectedSubStatus(e.target.value)}
               />
             </>
           )}

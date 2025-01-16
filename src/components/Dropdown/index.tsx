@@ -240,7 +240,7 @@ const Dropdown: React.FC<DropdownProps> = ({
   // -----------------------------
   const handleChange = useCallback(
     (event: SelectChangeEvent<string>) => {
-      const newValue = event.target.value as string
+      const newValue = event.target.value
       setSelectedValue(newValue)
 
       if (onChange) {

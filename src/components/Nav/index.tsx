@@ -1,13 +1,11 @@
 'use client'
-import React, { useState, useCallback, FC } from 'react'
-import { useRouter } from 'next/navigation'
+import React, { useState } from 'react'
 import { Drawer, Box, Stack, Divider } from '@mui/material'
 import Link from 'next/link'
 import { Typography } from '../Typography'
 
 // Replaced SearchableDropdown import with Dropdown import
 import SearchableDropdown from '../SearchableDropdown'
-
 import { white, ocean, semiTransparentWhite } from '../../styles/palette'
 
 // New imports for split components
@@ -93,13 +91,21 @@ export interface NavProps {
 
   /** Margin below the nav title. */
   marginbelowtitle?: string
+
+  /**
+   * Optional router object for route navigation (instead of `useRouter`).
+   * If omitted and an item has `trigger === 'route'`, no action will occur.
+   */
+  router?: {
+    push: (route: string) => void
+  }
 }
 
 // --------------------------------------------------------------------------
 // SINGLE CONST NAV COMPONENT
 // --------------------------------------------------------------------------
 
-const Nav: FC<NavProps> = ({
+function Nav({
   items = [],
   showSearchableNav = true,
   showTitle = true,
@@ -116,16 +122,14 @@ const Nav: FC<NavProps> = ({
   spacingfromtopofscreen,
   marginabovetitle = '0px',
   marginbelowtitle = '5px',
-}) => {
+  router,
+}: NavProps) {
   // States for expanded mainNavs and subNavs
   const [expandedNavs, setExpandedNavs] = useState<string[]>([])
   const [expandedSubnavs, setExpandedSubnavs] = useState<string[]>([])
 
   // Default width for the vertical nav
   const [verticalNavWidth] = useState<string>('250px')
-
-  // For route triggers
-  const router = useRouter()
 
   // For search dropdown
   const [selectedNav, setSelectedNav] = useState<string | null>(null)
@@ -135,132 +139,114 @@ const Nav: FC<NavProps> = ({
     .filter(item => item.navType === 'mainNav')
     .map(item => ({ value: item.title }))
 
-  /**
-   * Handle route or onClick triggers for mainNav/subNav/viewNav
-   */
-  const handleNavClick = useCallback(
-    (item: NavItem) => {
-      if (item.trigger === 'route' && item.route) {
-        router.push(item.route)
-        if (variant === 'temporary' && onClose) {
-          onClose()
-        }
-      } else if (item.trigger === 'onClick' && item.onClick) {
-        item.onClick()
-        if (variant === 'temporary' && onClose) {
-          onClose()
+  // Handle route or onClick triggers for mainNav/subNav/viewNav
+  function handleNavClick(item: NavItem) {
+    if (item.trigger === 'route' && item.route && router) {
+      router.push(item.route)
+      if (variant === 'temporary' && onClose) {
+        onClose()
+      }
+    } else if (item.trigger === 'onClick' && item.onClick) {
+      item.onClick()
+      if (variant === 'temporary' && onClose) {
+        onClose()
+      }
+    }
+  }
+
+  // Recursively render mainNav -> subNav -> viewNav
+  function renderItem(
+    item: NavItem,
+    level: number,
+    activeAndHoverColor = semiTransparentWhite.main
+  ) {
+    switch (item.navType) {
+      // 1) MAIN NAV
+      case 'mainNav': {
+        const hasChildren = !!item.subnavs?.length
+        if (hasChildren) {
+          // Render the expanding version
+          return (
+            <ExpandingNav
+              key={item.title}
+              title={item.title}
+              expandedNavs={expandedNavs}
+              setExpandedNavs={setExpandedNavs}
+              onClick={() => handleNavClick(item)}
+              level={level}
+            >
+              {item.subnavs?.map(subItem =>
+                renderItem(subItem, level + 1, activeAndHoverColor)
+              )}
+            </ExpandingNav>
+          )
+        } else {
+          // Render the simple list version (no children)
+          return (
+            <ListNav
+              key={item.title}
+              title={item.title}
+              onClick={() => handleNavClick(item)}
+              level={level}
+            />
+          )
         }
       }
-    },
-    [router, variant, onClose]
-  )
 
-  /**
-   * Recursively render mainNav -> subNav -> viewNav
-   */
-  const renderItem = useCallback(
-    (
-      item: NavItem,
-      level: number,
-      activeAndHoverColor = semiTransparentWhite.main
-    ) => {
-      switch (item.navType) {
-        // 1) MAIN NAV
-        case 'mainNav': {
-          const hasChildren = !!item.subnavs?.length
-          if (hasChildren) {
-            // Render the expanding version
-            return (
-              <ExpandingNav
-                key={item.title}
-                title={item.title}
-                expandedNavs={expandedNavs}
-                setExpandedNavs={setExpandedNavs}
-                onClick={() => handleNavClick(item)}
-                level={level}
-              >
-                {item.subnavs?.map(subItem =>
-                  renderItem(subItem, level + 1, activeAndHoverColor)
-                )}
-              </ExpandingNav>
-            )
-          } else {
-            // Render the simple list version (no children)
-            return (
-              <ListNav
-                key={item.title}
-                title={item.title}
-                onClick={() => handleNavClick(item)}
-                level={level}
-              />
-            )
-          }
-        }
-
-        // 2) SUB NAV
-        case 'subNav': {
-          const hasChildren = !!item.views?.length
-          if (hasChildren) {
-            // Render the expanding subNav
-            return (
-              <ExpandingSubNav
-                key={item.title}
-                title={item.title}
-                expandedSubnavs={expandedSubnavs}
-                setExpandedSubnavs={setExpandedSubnavs}
-              >
-                {item.views?.map(view =>
-                  renderItem(view, level + 2, activeAndHoverColor)
-                )}
-              </ExpandingSubNav>
-            )
-          } else {
-            // Render the simple list subNav
-            return (
-              <ListSubNav
-                key={item.title}
-                title={item.title}
-                route={item.route}
-                trigger={item.trigger}
-                activeAndHoverColor={activeAndHoverColor}
-                onClose={onClose}
-                variant={variant}
-              />
-            )
-          }
-        }
-
-        // 3) VIEW NAV
-        case 'viewNav': {
+      // 2) SUB NAV
+      case 'subNav': {
+        const hasChildren = !!item.views?.length
+        if (hasChildren) {
+          // Render the expanding subNav
           return (
-            <ViewNav
+            <ExpandingSubNav
+              key={item.title}
+              title={item.title}
+              expandedSubnavs={expandedSubnavs}
+              setExpandedSubnavs={setExpandedSubnavs}
+            >
+              {item.views?.map(view =>
+                renderItem(view, level + 2, activeAndHoverColor)
+              )}
+            </ExpandingSubNav>
+          )
+        } else {
+          // Render the simple list subNav
+          return (
+            <ListSubNav
               key={item.title}
               title={item.title}
               route={item.route}
               trigger={item.trigger}
-              onClick={item.onClick}
-              level={level}
               activeAndHoverColor={activeAndHoverColor}
               onClose={onClose}
               variant={variant}
             />
           )
         }
-
-        default:
-          return null
       }
-    },
-    [
-      expandedNavs,
-      setExpandedNavs,
-      expandedSubnavs,
-      setExpandedSubnavs,
-      handleNavClick,
-      onClose,
-      variant,
-    ]
-  )
+
+      // 3) VIEW NAV
+      case 'viewNav': {
+        return (
+          <ViewNav
+            key={item.title}
+            title={item.title}
+            route={item.route}
+            trigger={item.trigger}
+            onClick={item.onClick}
+            level={level}
+            activeAndHoverColor={activeAndHoverColor}
+            onClose={onClose}
+            variant={variant}
+          />
+        )
+      }
+
+      default:
+        return null
+    }
+  }
 
   // Drawer Content: Title, optional search, optional divider, then items
   const drawerContent = (

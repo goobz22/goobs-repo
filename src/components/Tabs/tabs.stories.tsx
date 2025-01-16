@@ -1,9 +1,8 @@
 // src/components/Tabs/tabs.stories.tsx
 
-import React from 'react'
 import type { Meta, StoryObj } from '@storybook/react'
 import { within, userEvent, expect } from '@storybook/test'
-import Tabs, { TabsProps, TabsItem } from './index'
+import Tabs, { TabsItem } from './index'
 
 /**
  * A small helper to emulate a "pathname" in a Storybook environment.
@@ -90,6 +89,7 @@ type Story = StoryObj<typeof Tabs>
 
 /**
  * 1) Basic usage
+ *    No userEvent => remove `async`.
  */
 export const Basic: Story = {
   args: {
@@ -98,8 +98,7 @@ export const Basic: Story = {
     height: '48px',
     navname: 'basicNav',
   },
-  // We'll set the mock pathname to "/home" so the "Home" tab is selected initially.
-  play: async ({ canvasElement }) => {
+  play: ({ canvasElement }) => {
     mockCurrentPathname('/home')
 
     const canvas = within(canvasElement)
@@ -116,6 +115,7 @@ export const Basic: Story = {
 
 /**
  * 2) Center alignment
+ *    No userEvent => remove `async`.
  */
 export const CenterAlignment: Story = {
   args: {
@@ -124,7 +124,7 @@ export const CenterAlignment: Story = {
     height: '50px',
     navname: 'centerNav',
   },
-  play: async ({ canvasElement }) => {
+  play: ({ canvasElement }) => {
     mockCurrentPathname('/about')
 
     const canvas = within(canvasElement)
@@ -136,6 +136,7 @@ export const CenterAlignment: Story = {
 
 /**
  * 3) Tabs with left/right borders on certain items
+ *    No userEvent => remove `async`.
  */
 export const TabsWithBorders: Story = {
   args: {
@@ -143,7 +144,7 @@ export const TabsWithBorders: Story = {
     alignment: 'center',
     navname: 'borderNav',
   },
-  play: async ({ canvasElement }) => {
+  play: ({ canvasElement }) => {
     mockCurrentPathname('/two')
 
     const canvas = within(canvasElement)
@@ -155,6 +156,7 @@ export const TabsWithBorders: Story = {
 
 /**
  * 4) Mixed triggers: some route-based, some onClick
+ *    Uses userEvent => keep `async`.
  */
 export const MixedTriggers: Story = {
   args: {
@@ -182,6 +184,7 @@ export const MixedTriggers: Story = {
 
 /**
  * 5) Interaction: switching routes
+ *    Uses userEvent => keep `async`.
  */
 export const SwitchRouteInteraction: Story = {
   args: {
@@ -202,12 +205,8 @@ export const SwitchRouteInteraction: Story = {
     // Click "About"
     await userEvent.click(aboutTab)
     // Now window.location.href changes to "/about"
-    // If your component depends on next/navigation hooking,
-    // you might not see a real re-render in Storybook,
-    // but we can at least confirm that the code tries to set it.
 
-    // Re-check the "aboutTab" if the component re-renders,
-    // though in a real Next environment it might cause a full page load.
+    // Re-check "About" is "aria-selected"
     expect(aboutTab).toHaveAttribute('aria-selected', 'true')
   },
 }

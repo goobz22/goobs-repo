@@ -1,13 +1,8 @@
 // src/components/TransferList/transferlist.stories.tsx
 
-import React from 'react'
 import type { Meta, StoryObj } from '@storybook/react'
 import { within, userEvent, expect } from '@storybook/test'
-import TransferList, {
-  TransferListProps,
-  TransferListDropdownDataMap,
-} from './index'
-import { Box } from '@mui/material'
+import TransferList, { TransferListDropdownDataMap } from './index'
 
 /**
  * Shared story metadata
@@ -53,6 +48,7 @@ const sampleDropdownOptions = [
 
 /**
  * 1) Basic Single-Selection (Empty Right)
+ *    No user actions => remove `async`.
  */
 export const BasicSingle: Story = {
   args: {
@@ -65,21 +61,19 @@ export const BasicSingle: Story = {
       console.log('Updated single => left:', left, 'right:', right)
     },
   },
-  play: async ({ canvasElement }) => {
+  play: ({ canvasElement }) => {
     const canvas = within(canvasElement)
-
     // Confirm the presence of "Alpha", "Beta", "Gamma" on the left
     expect(canvas.getByText('Alpha')).toBeInTheDocument()
     expect(canvas.getByText('Beta')).toBeInTheDocument()
     expect(canvas.getByText('Gamma')).toBeInTheDocument()
-
     // Check that the right side is empty
-    // userEvent is optional for further testing.
   },
 }
 
 /**
  * 2) Single-Selection with Pre-Filled Right Items
+ *    We do user interactions => keep `async`.
  */
 export const SinglePrefilled: Story = {
   args: {
@@ -116,13 +110,12 @@ export const SinglePrefilled: Story = {
     // Now "Item A" should be removed from left, appear in right
     expect(canvas.queryByText('Item A')).not.toBeInTheDocument()
     expect(canvas.getByText('Item A')).toBeInTheDocument() // On the right side
-
-    // No direct assertion for final arrays, but we confirm the UI updated.
   },
 }
 
 /**
  * 3) Multiple-Selection variant, with a dropdown
+ *    We do user interactions => keep `async`.
  */
 export const MultipleWithDropdown: Story = {
   args: {
@@ -138,7 +131,6 @@ export const MultipleWithDropdown: Story = {
       })
     },
   },
-  // We can define a custom "play" function to test picking a dropdown value, then moving items.
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement)
 
@@ -164,7 +156,7 @@ export const MultipleWithDropdown: Story = {
 
 /**
  * 4) With itemLabelMap
- *    Suppose our internal values are "HIGH", "MEDIUM", "LOW", but we want fancy labels.
+ *    No user interactions => remove `async`.
  */
 export const WithItemLabelMap: Story = {
   args: {
@@ -180,7 +172,7 @@ export const WithItemLabelMap: Story = {
       console.log('Label mapped => left:', left, 'right:', right)
     },
   },
-  play: async ({ canvasElement }) => {
+  play: ({ canvasElement }) => {
     const canvas = within(canvasElement)
     // We see "High Priority" & "Medium Priority" on the left, "Low Priority" on the right
     expect(canvas.getByText('High Priority')).toBeInTheDocument()
@@ -191,7 +183,7 @@ export const WithItemLabelMap: Story = {
 
 /**
  * 5) Large scenario: multipleSelection with big lists
- *    We'll just ensure no crash occurs.
+ *    No user interactions => remove `async`.
  */
 export const LargeScenario: Story = {
   args: {
@@ -212,7 +204,7 @@ export const LargeScenario: Story = {
       console.log('Large scenario =>', { left, right, dropdownValue })
     },
   },
-  play: async ({ canvasElement }) => {
+  play: ({ canvasElement }) => {
     const canvas = within(canvasElement)
     // Basic existence test
     expect(canvas.getByText('Select Type')).toBeInTheDocument()

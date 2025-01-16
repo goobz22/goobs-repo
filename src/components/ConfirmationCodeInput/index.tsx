@@ -1,5 +1,11 @@
 'use client'
-import React, { ChangeEvent, KeyboardEvent, useState, useCallback } from 'react'
+import React, {
+  ChangeEvent,
+  KeyboardEvent,
+  useState,
+  useCallback,
+  FC,
+} from 'react'
 import { Input, Box } from '@mui/material'
 import { columnconfig } from '../Grid'
 import { red, green } from '../../styles/palette'
@@ -33,7 +39,8 @@ const useCodeConfirmation = ({
 
   const handleCodeChange = useCallback(
     (event: React.ChangeEvent<HTMLInputElement>, index: number) => {
-      const value = event.target.value.replace(/\D/g, '') // Only keep digits
+      // Only keep digits
+      const value = event.target.value.replace(/\D/g, '')
       if (value.length <= 1) {
         // Only process if it's a single digit or empty
         setCode(prevCode => {
@@ -41,6 +48,7 @@ const useCodeConfirmation = ({
             ...prevCode,
             [`code${index + 1}`]: value,
           }
+          // Combine all code pieces
           const combinedValue = Object.values(newCode).join('')
           onChange?.(combinedValue)
           return newCode
@@ -68,6 +76,7 @@ const useCodeConfirmation = ({
         return
       }
 
+      // If user pressed backspace on an empty input, move cursor to previous
       if (event.key === 'Backspace' && !code[`code${index + 1}`] && index > 0) {
         setCode(prevCode => {
           const newCode = {
@@ -79,23 +88,26 @@ const useCodeConfirmation = ({
           return newCode
         })
 
-        const prevInput = document.querySelector(
+        // Move focus to previous input
+        const prevInput = document.querySelector<HTMLInputElement>(
           `input[name=code${index}]`
-        ) as HTMLInputElement | null
+        )
         if (prevInput) {
           prevInput.focus()
         }
       } else if (event.key === 'ArrowLeft' && index > 0) {
-        const prevInput = document.querySelector(
+        // Move focus left
+        const prevInput = document.querySelector<HTMLInputElement>(
           `input[name=code${index}]`
-        ) as HTMLInputElement | null
+        )
         if (prevInput) {
           prevInput.focus()
         }
       } else if (event.key === 'ArrowRight' && index < codeLength - 1) {
-        const nextInput = document.querySelector(
+        // Move focus right
+        const nextInput = document.querySelector<HTMLInputElement>(
           `input[name=code${index + 2}]`
-        ) as HTMLInputElement | null
+        )
         if (nextInput) {
           nextInput.focus()
         }
@@ -110,7 +122,7 @@ const useCodeConfirmation = ({
   }
 }
 
-const ConfirmationCodeInputs: React.FC<ConfirmationCodeInputsProps> = ({
+const ConfirmationCodeInputs: FC<ConfirmationCodeInputsProps> = ({
   codeLength = 6,
   isValid,
   onChange,
@@ -125,18 +137,18 @@ const ConfirmationCodeInputs: React.FC<ConfirmationCodeInputsProps> = ({
     onChange,
   })
 
+  // For manual changes (typing digits), also handle auto-focus next field
   const handleChange = (
     event: ChangeEvent<HTMLInputElement>,
     index: number
   ) => {
     const inputValue = event.target.value.replace(/\D/g, '') // Only keep digits
     if (inputValue.length <= 1) {
-      // Only process if it's a single digit or empty
       handleCodeChange(event, index)
       if (inputValue) {
-        const nextInput = document.querySelector(
+        const nextInput = document.querySelector<HTMLInputElement>(
           `input[name=code${index + 2}]`
-        ) as HTMLInputElement | null
+        )
         if (nextInput) {
           nextInput.focus()
         }
@@ -151,8 +163,10 @@ const ConfirmationCodeInputs: React.FC<ConfirmationCodeInputsProps> = ({
     handleKeyDown(event, index)
   }
 
-  // Split the value into individual digits
-  const digits = value?.split('') || Array(codeLength).fill('')
+  // Safely create an array of string digits
+  const digits: string[] = value
+    ? value.split('')
+    : Array.from({ length: codeLength }, () => '')
 
   return (
     <Box

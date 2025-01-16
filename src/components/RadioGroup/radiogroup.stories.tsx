@@ -1,9 +1,8 @@
 // src/components/RadioGroup/radiogroup.stories.tsx
 
-import React from 'react'
 import type { Meta, StoryObj } from '@storybook/react'
 import { within, userEvent, expect } from '@storybook/test'
-import RadioGroup, { RadioGroupProps, RadioOption } from './index'
+import RadioGroup, { RadioOption } from './index'
 
 /**
  * Example options to be used across stories
@@ -32,6 +31,7 @@ type Story = StoryObj<typeof RadioGroup>
 
 /**
  * 1) Basic usage
+ *    No user interactions => remove `async`.
  */
 export const Basic: Story = {
   args: {
@@ -39,7 +39,7 @@ export const Basic: Story = {
     labelText: 'Choose an Option',
     options: sampleOptions,
   },
-  play: async ({ canvasElement }) => {
+  play: ({ canvasElement }) => {
     const canvas = within(canvasElement)
     // Verify label text
     expect(canvas.getByText('Choose an Option')).toBeInTheDocument()
@@ -53,6 +53,7 @@ export const Basic: Story = {
 
 /**
  * 2) With a default selected value
+ *    No user interactions => remove `async`.
  */
 export const WithDefaultValue: Story = {
   args: {
@@ -61,17 +62,17 @@ export const WithDefaultValue: Story = {
     defaultValue: 'Option B',
     options: sampleOptions,
   },
-  play: async ({ canvasElement }) => {
+  play: ({ canvasElement }) => {
     const canvas = within(canvasElement)
     // Confirm "Option B" is selected by default
-    const optionB = canvas.getByLabelText('Option B') as HTMLInputElement
+    const optionB = canvas.getByLabelText('Option B')
     expect(optionB).toBeChecked()
   },
 }
 
 /**
  * 3) Custom Label Styles
- *    Demonstrates per-option fontColor / fontVariant
+ *    No user interactions => remove `async`.
  */
 export const CustomLabelStyles: Story = {
   args: {
@@ -91,7 +92,7 @@ export const CustomLabelStyles: Story = {
       },
     ],
   },
-  play: async ({ canvasElement }) => {
+  play: ({ canvasElement }) => {
     const canvas = within(canvasElement)
     // The label text should be visible
     expect(canvas.getByText('Which flavor do you prefer?')).toBeInTheDocument()
@@ -105,6 +106,7 @@ export const CustomLabelStyles: Story = {
 
 /**
  * 4) Label variant & color from the top-level props
+ *    No user interactions => remove `async`.
  */
 export const TopLevelLabelStyling: Story = {
   args: {
@@ -113,7 +115,7 @@ export const TopLevelLabelStyling: Story = {
     labelFontColor: '#673ab7', // Deep Purple
     options: sampleOptions,
   },
-  play: async ({ canvasElement }) => {
+  play: ({ canvasElement }) => {
     const canvas = within(canvasElement)
     // Confirm the top-level label text
     expect(canvas.getByText('Survey Question')).toBeInTheDocument()
@@ -122,6 +124,7 @@ export const TopLevelLabelStyling: Story = {
 
 /**
  * 5) Interaction: Selecting an Option
+ *    Uses userEvent => keep `async`.
  */
 export const SelectingOption: Story = {
   args: {
@@ -133,9 +136,9 @@ export const SelectingOption: Story = {
     const canvas = within(canvasElement)
 
     // Initially none are selected
-    const optionA = canvas.getByLabelText('Option A') as HTMLInputElement
-    const optionB = canvas.getByLabelText('Option B') as HTMLInputElement
-    const optionC = canvas.getByLabelText('Option C') as HTMLInputElement
+    const optionA = canvas.getByLabelText('Option A')
+    const optionB = canvas.getByLabelText('Option B')
+    const optionC = canvas.getByLabelText('Option C')
 
     expect(optionA).not.toBeChecked()
     expect(optionB).not.toBeChecked()

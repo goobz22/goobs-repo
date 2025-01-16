@@ -103,11 +103,10 @@ const SearchableDropdown: React.FC<SearchableDropdownProps> = ({
     newValue: DropdownOption | string | null
   ) => {
     if (typeof newValue === 'string') {
+      // freeSolo typed text
       setValue(newValue)
       setInputValue(newValue)
-      if (onChange) {
-        onChange(null)
-      }
+      onChange?.(null)
     } else {
       setValue(newValue)
       if (newValue) {
@@ -115,14 +114,10 @@ const SearchableDropdown: React.FC<SearchableDropdownProps> = ({
           newValue.value.replace(/_/g, ' ').charAt(0).toUpperCase() +
           newValue.value.replace(/_/g, ' ').slice(1)
         setInputValue(displayText)
-        if (onChange) {
-          onChange(newValue)
-        }
+        onChange?.(newValue)
       } else {
         setInputValue('')
-        if (onChange) {
-          onChange(null)
-        }
+        onChange?.(null)
       }
     }
   }
@@ -171,28 +166,24 @@ const SearchableDropdown: React.FC<SearchableDropdownProps> = ({
           option.value.replace(/_/g, ' ').slice(1)
         )
       }}
-      renderOption={(liProps, option) => {
-        const { key, ...otherLiProps } = liProps
-        const opt = option as DropdownOption
-        return (
-          <li key={key} {...otherLiProps} style={{ color: black.main }}>
+      renderOption={(liProps, option) => (
+        <li {...liProps} style={{ color: black.main }}>
+          <Typography
+            fontvariant="merriparagraph"
+            text={option.value.replace(/_/g, ' ')}
+            fontcolor={black.main}
+          />
+          {option.attribute1 && (
             <Typography
               fontvariant="merriparagraph"
-              text={opt.value.replace(/_/g, ' ')}
+              text={`${option.attribute1}${
+                option.attribute2 ? ` | ${option.attribute2}` : ''
+              }`}
               fontcolor={black.main}
             />
-            {opt.attribute1 && (
-              <Typography
-                fontvariant="merriparagraph"
-                text={`${opt.attribute1}${
-                  opt.attribute2 ? ` | ${opt.attribute2}` : ''
-                }`}
-                fontcolor={black.main}
-              />
-            )}
-          </li>
-        )
-      }}
+          )}
+        </li>
+      )}
       renderInput={params => (
         <TextField
           {...params}
@@ -279,11 +270,6 @@ const SearchableDropdown: React.FC<SearchableDropdownProps> = ({
         '& .MuiAutocomplete-option[aria-selected="true"]': {
           backgroundColor: `${black.main}08`,
         },
-        // The default rotation is 180deg; remove these lines if you want no rotation
-        // or override them as you like:
-        // '& .MuiAutocomplete-popupIndicatorOpen': {
-        //   transform: 'rotate(180deg)',
-        // },
       }}
     />
   )

@@ -50,7 +50,8 @@ const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
   }
 
   const handleSwitchMode = () => {
-    handleSwitchToRichText(
+    // Mark the returned Promise as intentionally ignored:
+    void handleSwitchToRichText(
       markdown,
       setNewSlateValue,
       setNewSlateValue,
@@ -77,11 +78,12 @@ const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
         markdownMode={markdownMode}
         setMarkdownMode={setMarkdownMode}
         setMarkdown={setMarkdown}
+        /* Notice the inline `void` calls here */
         handleBoldClick={() =>
-          handleBoldClick(selectedText, markdown, setMarkdown)
+          void handleBoldClick(selectedText, markdown, setMarkdown)
         }
         handleItalicClick={() =>
-          handleItalicClick(selectedText, markdown, setMarkdown)
+          void handleItalicClick(selectedText, markdown, setMarkdown)
         }
         switchModeLabel="RichText Mode"
         onSwitchMode={handleSwitchMode}

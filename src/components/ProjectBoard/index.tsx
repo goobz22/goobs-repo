@@ -369,7 +369,7 @@ function ProjectBoard({
   const exactlyOneSelected = selectedTask !== null
   let selectedTaskId = ''
   if (exactlyOneSelected) {
-    const { colIndex, taskIndex } = selectedTask!
+    const { colIndex, taskIndex } = selectedTask
     if (
       colIndex >= 0 &&
       colIndex < columnState.length &&

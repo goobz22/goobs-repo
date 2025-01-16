@@ -1,13 +1,10 @@
 // src/components/Stepper/stepper.stories.tsx
 
-import React from 'react'
 import type { Meta, StoryObj } from '@storybook/react'
 import { within, userEvent, expect } from '@storybook/test'
 import { CustomStepper, CustomStepperProps } from './index'
 
-// --------------------------------------------------------------------------
-// Sample Steps
-// --------------------------------------------------------------------------
+/** Sample Steps */
 const basicSteps: CustomStepperProps['steps'] = [
   {
     stepNumber: 1,
@@ -111,33 +108,29 @@ const complexSteps: CustomStepperProps['steps'] = [
   },
 ]
 
-// --------------------------------------------------------------------------
-// Storybook Config
-// --------------------------------------------------------------------------
+/** Storybook Config */
 const meta: Meta<typeof CustomStepper> = {
   title: 'Components/Stepper',
   component: CustomStepper,
   parameters: {
-    a11y: {
-      disable: false,
-    },
+    a11y: { disable: false },
   },
 }
 export default meta
-
 type Story = StoryObj<typeof CustomStepper>
 
 /**
  * 1) Basic usage
+ *    - No userEvent => remove `async`.
  */
 export const Basic: Story = {
   args: {
     steps: basicSteps,
-    activeStep: 2, // The second step is active
+    activeStep: 2,
     nonLinear: true,
     orientation: 'horizontal',
   },
-  play: async ({ canvasElement }) => {
+  play: ({ canvasElement }) => {
     const canvas = within(canvasElement)
     // Confirm we see "Step One", "Step Two", "Step Three"
     expect(canvas.getByText('Step One')).toBeInTheDocument()
@@ -148,6 +141,7 @@ export const Basic: Story = {
 
 /**
  * 2) Steps with an error state
+ *    - No userEvent => remove `async`.
  */
 export const WithErrorStep: Story = {
   args: {
@@ -156,19 +150,16 @@ export const WithErrorStep: Story = {
     nonLinear: true,
     orientation: 'horizontal',
   },
-  play: async ({ canvasElement }) => {
+  play: ({ canvasElement }) => {
     const canvas = within(canvasElement)
-    // Check for the label "Second Step (Error)" is in the DOM
+    // Check for the label "Second Step (Error)"
     expect(canvas.getByText(/second step \(error\)/i)).toBeInTheDocument()
-
-    // Hover or click the info icon for the second step's description if desired
-    const errorIcon = canvas.queryByRole('button') // might need additional query if you want to test the tooltip
-    // The rest depends on your DOM structure & how you prefer to test the tooltip
   },
 }
 
 /**
  * 3) With Descriptions (Tooltip icons)
+ *    - No userEvent => remove `async`.
  */
 export const Descriptions: Story = {
   args: {
@@ -176,72 +167,73 @@ export const Descriptions: Story = {
     activeStep: 2,
     orientation: 'vertical',
   },
-  play: async ({ canvasElement }) => {
+  play: ({ canvasElement }) => {
     const canvas = within(canvasElement)
-    // The step with description "Ongoing step with a helpful tooltip." should appear
+    // The step label "Middle" is in the DOM
     expect(canvas.getByText('Middle')).toBeInTheDocument()
-
-    // If you'd like to test the tooltip:
-    // 1) Find the info icon for "Middle" step
-    // 2) userEvent.hover() or userEvent.click() to open the tooltip
   },
 }
 
 /**
  * 4) Complex scenario with multiple steps
+ *    - No userEvent => remove `async`.
  */
 export const Complex: Story = {
   args: {
     steps: complexSteps,
     activeStep: 3, // Step 3 is active
-    nonLinear: false, // For a more linear approach
+    nonLinear: false,
     orientation: 'horizontal',
   },
-  play: async ({ canvasElement }) => {
+  play: ({ canvasElement }) => {
     const canvas = within(canvasElement)
     // Confirm "Phase 5 (Error)" is in the DOM
     expect(canvas.getByText('Phase 5 (Error)')).toBeInTheDocument()
-
-    // "Phase 3" is active, so you might see a highlight or active style
-    // Confirm the step is in the DOM
+    // "Phase 3" is active
     expect(canvas.getByText('Phase 3')).toBeInTheDocument()
   },
 }
 
 /**
  * 5) Interactive: Switching Active Step
- *    Demonstrates how you'd handle switching active steps (though typically the parent would do so).
+ *    - We do user interactions => keep `async`.
  */
-export const Interactive: Story = {
-  // We'll reuse "basicSteps", but let us handle active step in a local state
-  render: args => {
-    const [currentStep, setCurrentStep] = React.useState(1)
 
-    const nextStep = () => {
-      setCurrentStep(prev => Math.min(prev + 1, args.steps.length))
-    }
-    const prevStep = () => {
-      setCurrentStep(prev => Math.max(prev - 1, 1))
-    }
+/**
+ * A small helper component so we can safely use Hooks.
+ */
+import React, { useState } from 'react'
+function InteractiveExample(props: CustomStepperProps) {
+  const [currentStep, setCurrentStep] = useState(1)
 
-    return (
-      <div>
-        <CustomStepper {...args} activeStep={currentStep} />
-        <div style={{ marginTop: '16px' }}>
-          <button onClick={prevStep} disabled={currentStep <= 1}>
-            Previous
-          </button>
-          <button
-            onClick={nextStep}
-            disabled={currentStep >= args.steps.length}
-            style={{ marginLeft: '8px' }}
-          >
-            Next
-          </button>
-        </div>
+  const nextStep = () => {
+    setCurrentStep(prev => Math.min(prev + 1, props.steps.length))
+  }
+  const prevStep = () => {
+    setCurrentStep(prev => Math.max(prev - 1, 1))
+  }
+
+  return (
+    <div>
+      <CustomStepper {...props} activeStep={currentStep} />
+      <div style={{ marginTop: '16px' }}>
+        <button onClick={prevStep} disabled={currentStep <= 1}>
+          Previous
+        </button>
+        <button
+          onClick={nextStep}
+          disabled={currentStep >= props.steps.length}
+          style={{ marginLeft: '8px' }}
+        >
+          Next
+        </button>
       </div>
-    )
-  },
+    </div>
+  )
+}
+
+export const Interactive: Story = {
+  render: args => <InteractiveExample {...args} />,
   args: {
     steps: basicSteps,
     nonLinear: true,
@@ -249,17 +241,15 @@ export const Interactive: Story = {
   },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement)
-    // Initially, Step #1 (Step One) is active
+    // Initially, Step #1 is active
     expect(canvas.getByText('Step One')).toBeInTheDocument()
 
-    // "Next" button to move to step #2
+    // "Next" => move to Step #2
     const nextBtn = canvas.getByRole('button', { name: 'Next' })
     await userEvent.click(nextBtn)
-    // Now step #2 is active, you might test the style or check the console
 
-    // "Previous" button to go back
+    // "Previous" => go back
     const prevBtn = canvas.getByRole('button', { name: 'Previous' })
     await userEvent.click(prevBtn)
-    // Step #1 is active again
   },
 }

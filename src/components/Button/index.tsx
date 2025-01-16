@@ -1,7 +1,6 @@
 'use client'
-import React, { JSX } from 'react'
+import React from 'react'
 import { Button, Box, ButtonProps } from '@mui/material'
-import { SxProps, Theme } from '@mui/system'
 import Typography from '../Typography'
 import { SvgIconProps } from '@mui/material/SvgIcon'
 
@@ -31,10 +30,6 @@ export interface CustomButtonProps extends ButtonProps {
   fontlocation?: 'left' | 'center' | 'right'
 }
 
-/**
- * CustomButton uses sx props for styling:
- *  - We define dynamic logic based on "disabled", "backgroundcolor", etc.
- */
 function CustomButton({
   text,
   variant = 'contained',
@@ -50,10 +45,9 @@ function CustomButton({
   iconsize,
   iconlocation = 'left',
   fontlocation = 'center',
-  sx,
   disabled,
   ...restProps
-}: CustomButtonProps): JSX.Element {
+}: CustomButtonProps) {
   // Merge MUI's "disabled" with our "disableButton"
   const isReallyDisabled = disabled || disableButton === 'true'
 
@@ -66,6 +60,8 @@ function CustomButton({
   const IconComponent = icon
     ? React.cloneElement(icon, {
         sx: {
+          // MUI icons accept a `sx` prop, but it's optional.
+          // If you do NOT want to rely on sx, you could remove this.
           color: iconcolor || 'inherit',
           fontSize: iconsize || '20px',
           minWidth: iconsize || '20px',
@@ -75,8 +71,8 @@ function CustomButton({
       } as Partial<SvgIconProps>)
     : null
 
-  // Construct base sx styles
-  const buttonSx: SxProps<Theme> = {
+  // Base inline styles for the button
+  const buttonStyle: React.CSSProperties = {
     minWidth: 'fit-content',
     width: 'auto',
     height: '40px',
@@ -85,7 +81,6 @@ function CustomButton({
     flexShrink: 0,
     flexWrap: 'nowrap',
     whiteSpace: 'nowrap',
-
     flexDirection: iconlocation === 'above' ? 'column' : 'row',
     alignItems: 'center',
     justifyContent:
@@ -94,53 +89,35 @@ function CustomButton({
         : fontlocation === 'right'
           ? 'flex-end'
           : 'center',
-
     gap: '8px',
-
-    '& .MuiButton-startIcon': { margin: 0 },
-    '& .MuiButton-endIcon': { margin: 0 },
+    // Default background color (handled below)
   }
 
-  // If disabled, force a grey background with no hover effect
+  // If disabled, force a grey background
   if (isReallyDisabled) {
-    buttonSx.backgroundColor = '#cccccc'
-    buttonSx['&:hover'] = {
-      backgroundColor: '#cccccc',
-      opacity: 1,
-      cursor: 'not-allowed',
-    }
+    buttonStyle.backgroundColor = '#cccccc'
+    buttonStyle.opacity = 1
+    buttonStyle.cursor = 'not-allowed'
   } else if (backgroundcolor && backgroundcolor !== 'none') {
     // Normal colored background
-    buttonSx.backgroundColor = backgroundcolor
-    buttonSx['&:hover'] = {
-      backgroundColor: backgroundcolor,
-      opacity: 0.9,
-    }
+    buttonStyle.backgroundColor = backgroundcolor
   } else if (backgroundcolor === 'none') {
     // No background => text button
-    buttonSx.backgroundColor = 'transparent'
-    buttonSx['&:hover'] = {
-      backgroundColor: 'transparent',
-      opacity: 0.9,
-    }
+    buttonStyle.backgroundColor = 'transparent'
   }
 
-  // Merge any sx passed in from parent
-  const mergedSx = Array.isArray(sx)
-    ? [buttonSx, ...sx]
-    : { ...buttonSx, ...sx }
+  // Inline styles for the top-level container (Box)
+  const containerStyle: React.CSSProperties = {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    width: width || 'auto',
+    height: height || '40px',
+    minWidth: 'fit-content',
+  }
 
   return (
-    <Box
-      sx={{
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        width: width || 'auto',
-        height: height || '40px',
-        minWidth: 'fit-content',
-      }}
-    >
+    <Box style={containerStyle}>
       <Button
         {...restProps}
         variant={variant}
@@ -148,14 +125,14 @@ function CustomButton({
         disabled={isReallyDisabled}
         disableElevation
         disableRipple
-        sx={mergedSx}
+        style={buttonStyle}
       >
         {/* If iconlocation="above", show the icon first */}
         {iconlocation === 'above' && IconComponent}
 
         {/* The text+icon container */}
         <Box
-          sx={{
+          style={{
             display: 'flex',
             alignItems: 'center',
             justifyContent:

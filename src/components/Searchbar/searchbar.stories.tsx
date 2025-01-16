@@ -1,9 +1,8 @@
 // src/components/Searchbar/searchbar.stories.tsx
 
-import React from 'react'
 import type { Meta, StoryObj } from '@storybook/react'
 import { within, userEvent, expect } from '@storybook/test'
-import Searchbar, { SearchbarProps } from './index'
+import Searchbar from './index'
 
 /**
  * Setup Storybook metadata
@@ -35,14 +34,14 @@ export const Basic: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement)
     // The input might have "Search..." as the placeholder
-    const input = canvas.getByPlaceholderText('Search...') as HTMLInputElement
+    const inputEl = canvas.getByPlaceholderText('Search...') // returns HTMLElement
 
     // Initially empty
-    expect(input.value).toBe('')
+    expect((inputEl as HTMLInputElement).value).toBe('')
 
     // Type something
-    await userEvent.type(input, 'Hello')
-    expect(input.value).toBe('Hello')
+    await userEvent.type(inputEl, 'Hello')
+    expect((inputEl as HTMLInputElement).value).toBe('Hello')
   },
 }
 
@@ -65,9 +64,9 @@ export const WithLabel: Story = {
     expect(canvas.getByText('Search Label')).toBeInTheDocument()
 
     // Type some text
-    const input = canvas.getByLabelText('Search Label') as HTMLInputElement
-    await userEvent.type(input, 'Apple')
-    expect(input.value).toBe('Apple')
+    const inputEl = canvas.getByLabelText('Search Label') // returns HTMLElement
+    await userEvent.type(inputEl, 'Apple')
+    expect((inputEl as HTMLInputElement).value).toBe('Apple')
   },
 }
 
@@ -89,11 +88,10 @@ export const CustomColors: Story = {
   },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement)
-    const input = canvas.getByLabelText('Colored Search') as HTMLInputElement
-
+    const inputEl = canvas.getByLabelText('Colored Search')
     // Type "Colored"
-    await userEvent.type(input, 'Colored')
-    expect(input.value).toBe('Colored')
+    await userEvent.type(inputEl, 'Colored')
+    expect((inputEl as HTMLInputElement).value).toBe('Colored')
   },
 }
 
@@ -112,11 +110,11 @@ export const NoOutline: Story = {
   },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement)
-    const input = canvas.getByLabelText('No Border') as HTMLInputElement
+    const inputEl = canvas.getByLabelText('No Border')
 
     // Type "Borderless"
-    await userEvent.type(input, 'Borderless')
-    expect(input.value).toBe('Borderless')
+    await userEvent.type(inputEl, 'Borderless')
+    expect((inputEl as HTMLInputElement).value).toBe('Borderless')
   },
 }
 
@@ -135,12 +133,12 @@ export const Prefilled: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement)
     // Confirm initial value
-    const input = canvas.getByLabelText('Prefilled Search') as HTMLInputElement
-    expect(input.value).toBe('Initial text')
+    const inputEl = canvas.getByLabelText('Prefilled Search')
+    expect((inputEl as HTMLInputElement).value).toBe('Initial text')
 
     // Clear it and type new text
-    await userEvent.clear(input)
-    await userEvent.type(input, 'New content')
-    expect(input.value).toBe('New content')
+    await userEvent.clear(inputEl)
+    await userEvent.type(inputEl, 'New content')
+    expect((inputEl as HTMLInputElement).value).toBe('New content')
   },
 }

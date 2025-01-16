@@ -1,8 +1,7 @@
 // src/components/QRCode/qrcode.stories.tsx
 
-import React from 'react'
 import { Meta, StoryObj } from '@storybook/react'
-import { within, userEvent, expect } from '@storybook/test'
+import { within, expect } from '@storybook/test'
 import QRCodeComponent, { QRCodeProps } from './index'
 
 /**
@@ -23,6 +22,7 @@ type Story = StoryObj<typeof QRCodeComponent>
 
 /**
  * 1) Basic usage
+ *    No user interactions => remove `async`.
  */
 export const Basic: Story = {
   name: 'Basic Usage',
@@ -30,7 +30,7 @@ export const Basic: Story = {
     username: 'john.doe',
     appName: 'MyApplication',
   } as QRCodeProps,
-  play: async ({ canvasElement }) => {
+  play: ({ canvasElement }) => {
     const canvas = within(canvasElement)
     // Check for the "Secret:" text in the component
     expect(canvas.getByText(/Secret:/i)).toBeInTheDocument()
@@ -39,6 +39,7 @@ export const Basic: Story = {
 
 /**
  * 2) With Custom Title
+ *    No user interactions => remove `async`.
  */
 export const WithTitle: Story = {
   args: {
@@ -46,7 +47,7 @@ export const WithTitle: Story = {
     appName: 'AwesomeApp',
     title: 'Scan This Code',
   },
-  play: async ({ canvasElement }) => {
+  play: ({ canvasElement }) => {
     const canvas = within(canvasElement)
     // Confirm we see our title text
     expect(canvas.getByText(/scan this code/i)).toBeInTheDocument()
@@ -55,6 +56,7 @@ export const WithTitle: Story = {
 
 /**
  * 3) Larger Size
+ *    No user interactions => remove `async`.
  */
 export const LargeSize: Story = {
   args: {
@@ -63,7 +65,7 @@ export const LargeSize: Story = {
     size: 400,
     title: 'Large QR Example',
   },
-  play: async ({ canvasElement }) => {
+  play: ({ canvasElement }) => {
     const canvas = within(canvasElement)
     // We won't measure pixel size, but we confirm the text
     expect(canvas.getByText('Large QR Example')).toBeInTheDocument()
@@ -72,7 +74,7 @@ export const LargeSize: Story = {
 
 /**
  * 4) On Secret Generated Callback
- *    We show how to capture the secret in a callback
+ *    No user interactions => remove `async`.
  */
 export const WithSecretCallback: Story = {
   args: {
@@ -80,11 +82,10 @@ export const WithSecretCallback: Story = {
     appName: 'CallbackApp',
     onSecretGenerated: secret => {
       // This just logs to the console, but you could do something more
-      // such as storing it or displaying it in the UI
       console.log('[QRCode] Secret generated =>', secret)
     },
   },
-  play: async ({ canvasElement }) => {
+  play: ({ canvasElement }) => {
     const canvas = within(canvasElement)
     // Secret should appear
     expect(canvas.getByText(/Secret:/)).toBeInTheDocument()
@@ -94,6 +95,7 @@ export const WithSecretCallback: Story = {
 
 /**
  * 5) Custom Styles
+ *    No user interactions => remove `async`.
  */
 export const CustomStyles: Story = {
   args: {
@@ -107,7 +109,7 @@ export const CustomStyles: Story = {
       p: 4,
     },
   },
-  play: async ({ canvasElement }) => {
+  play: ({ canvasElement }) => {
     const canvas = within(canvasElement)
     // Confirm the title is present
     expect(canvas.getByText('Custom Styled QR')).toBeInTheDocument()

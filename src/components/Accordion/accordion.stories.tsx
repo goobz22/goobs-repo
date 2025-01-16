@@ -1,5 +1,4 @@
 // src/components/Accordion/accordion.stories.tsx
-
 import React from 'react'
 import { Meta, StoryObj } from '@storybook/react'
 import { userEvent, within, expect } from '@storybook/test'
@@ -47,6 +46,7 @@ export const SingleAccordion: Story = {
   ),
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement)
+
     // 1. Verify that the accordion content is not visible initially
     expect(
       canvas.queryByText('This is the accordion content.')
@@ -73,10 +73,11 @@ export const DefaultExpanded: Story = {
       <AccordionDetails>{sampleContent}</AccordionDetails>
     </Accordion>
   ),
+  // Add async and return the assertion
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement)
-    // The content should be visible initially because defaultExpanded is true
-    expect(
+    // Return the assertion to properly handle the promise
+    return expect(
       canvas.getByText('This is the accordion content.')
     ).toBeInTheDocument()
   },
@@ -140,7 +141,7 @@ export const MultipleAccordions: Story = {
     await userEvent.click(canvas.getByText('First Item'))
     expect(canvas.getByText('Details for first item.')).toBeInTheDocument()
 
-    // The second item should generally remain expanded unless the `Accordion` is configured otherwise
+    // The second item should remain expanded unless the `Accordion` is configured otherwise
     expect(canvas.getByText('Details for second item.')).toBeInTheDocument()
   },
 }
@@ -207,7 +208,6 @@ export const CustomStyles: Story = {
   ),
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement)
-
     // Expand and verify
     await userEvent.click(canvas.getByText('Custom Styles'))
     expect(canvas.getByText('Look at this fancy border!')).toBeInTheDocument()
@@ -270,33 +270,34 @@ export const DisabledAccordion: Story = {
 }
 
 /**
- * 8) Controlled Accordion
- *    Example scenario of controlling the expanded state from outside.
- *    This is purely illustrative; the 'expanded' prop can be toggled using a button or state in a real app.
+ * 8) Controlled Accordion (toggle via props)
+ *    We must put our hook usage in a separate
+ *    React component whose name starts with a capital letter.
  */
+const ControlledAccordionExample = () => {
+  const [isExpanded, setIsExpanded] = React.useState(false)
+
+  return (
+    <>
+      <button onClick={() => setIsExpanded(!isExpanded)}>
+        Toggle Accordion
+      </button>
+      <Accordion expanded={isExpanded}>
+        <AccordionSummary>Controlled Accordion</AccordionSummary>
+        <AccordionDetails>
+          <Typography
+            fontvariant="merriparagraph"
+            text="This is controlled externally."
+          />
+        </AccordionDetails>
+      </Accordion>
+    </>
+  )
+}
+
 export const ControlledAccordion: Story = {
   name: 'Controlled Accordion (toggle via props)',
-  render: () => {
-    const [isExpanded, setIsExpanded] = React.useState(false)
-
-    return (
-      <>
-        <button onClick={() => setIsExpanded(!isExpanded)}>
-          Toggle Accordion
-        </button>
-
-        <Accordion expanded={isExpanded}>
-          <AccordionSummary>Controlled Accordion</AccordionSummary>
-          <AccordionDetails>
-            <Typography
-              fontvariant="merriparagraph"
-              text="This is controlled externally."
-            />
-          </AccordionDetails>
-        </Accordion>
-      </>
-    )
-  },
+  render: () => <ControlledAccordionExample />,
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement)
     // Initially hidden
@@ -308,7 +309,6 @@ export const ControlledAccordion: Story = {
     await userEvent.click(
       canvas.getByRole('button', { name: 'Toggle Accordion' })
     )
-
     // Now the content should appear
     expect(
       canvas.getByText('This is controlled externally.')

@@ -1,9 +1,8 @@
 // src/components/Typography/typography.stories.tsx
 
-import React from 'react'
 import type { Meta, StoryObj } from '@storybook/react'
 import { within, userEvent, expect } from '@storybook/test'
-import Typography, { TypographyProps } from './index'
+import Typography from './index' // Removed: `import { TypographyProps }` since it's unused
 import { Box } from '@mui/material'
 
 /**
@@ -24,13 +23,14 @@ type Story = StoryObj<typeof Typography>
 
 /**
  * 1) Basic usage with default text (no custom color)
+ *    No `await` => remove `async`.
  */
 export const Basic: Story = {
   args: {
     text: 'Hello, world!',
     fontvariant: 'arapeyh3', // Using "arapey" family with "h3" variant
   },
-  play: async ({ canvasElement }) => {
+  play: ({ canvasElement }) => {
     const canvas = within(canvasElement)
     // The text "Hello, world!" should appear
     expect(canvas.getByText('Hello, world!')).toBeInTheDocument()
@@ -39,6 +39,7 @@ export const Basic: Story = {
 
 /**
  * 2) Inter h1 with custom color
+ *    No `await` => remove `async`.
  */
 export const InterH1CustomColor: Story = {
   args: {
@@ -46,7 +47,7 @@ export const InterH1CustomColor: Story = {
     fontvariant: 'interh1', // "inter" + "h1"
     fontcolor: '#d32f2f', // Red
   },
-  play: async ({ canvasElement }) => {
+  play: ({ canvasElement }) => {
     const canvas = within(canvasElement)
     // The text "Large heading in Inter" should appear in red color
     expect(canvas.getByText('Large heading in Inter')).toBeInTheDocument()
@@ -55,13 +56,14 @@ export const InterH1CustomColor: Story = {
 
 /**
  * 3) Merriweather paragraph
+ *    No `await` => remove `async`.
  */
 export const MerriParagraph: Story = {
   args: {
     text: 'This is a Merriweather paragraph with normal weight.',
     fontvariant: 'merriparagraph',
   },
-  play: async ({ canvasElement }) => {
+  play: ({ canvasElement }) => {
     const canvas = within(canvasElement)
     expect(
       canvas.getByText('This is a Merriweather paragraph with normal weight.')
@@ -71,6 +73,7 @@ export const MerriParagraph: Story = {
 
 /**
  * 4) Additional subvariants (helperfooter, helperheader)
+ *    No `await` => remove `async`.
  */
 export const SubVariants: Story = {
   render: () => (
@@ -80,7 +83,7 @@ export const SubVariants: Story = {
       <Typography text="Merri H6" fontvariant="merrih6" />
     </Box>
   ),
-  play: async ({ canvasElement }) => {
+  play: ({ canvasElement }) => {
     const canvas = within(canvasElement)
     expect(canvas.getByText('Arapey Helperheader')).toBeInTheDocument()
     expect(canvas.getByText('Inter Helperfooter')).toBeInTheDocument()
@@ -90,7 +93,7 @@ export const SubVariants: Story = {
 
 /**
  * 5) Using 'variant' prop from MUI (fallback)
- *    If you pass variant="h4" and no fontvariant, it uses MUI default.
+ *    No `await` => remove `async`.
  */
 export const UsingMuiVariantFallback: Story = {
   args: {
@@ -98,7 +101,7 @@ export const UsingMuiVariantFallback: Story = {
     variant: 'h4', // Uses MUI's built-in variant
     fontcolor: '#1976d2', // Blue
   },
-  play: async ({ canvasElement }) => {
+  play: ({ canvasElement }) => {
     const canvas = within(canvasElement)
     expect(canvas.getByText('Default MUI h4 fallback')).toBeInTheDocument()
   },
@@ -106,6 +109,7 @@ export const UsingMuiVariantFallback: Story = {
 
 /**
  * 6) Combining text & children
+ *    No `await` => remove `async`.
  */
 export const TextAndChildren: Story = {
   render: () => (
@@ -114,8 +118,9 @@ export const TextAndChildren: Story = {
       <em style={{ marginLeft: '8px', color: '#000' }}>Hello!</em>
     </Typography>
   ),
-  play: async ({ canvasElement }) => {
+  play: ({ canvasElement }) => {
     const canvas = within(canvasElement)
+    // The combined text includes "This content is from children, plus text prop:Hello!"
     expect(
       canvas.getByText('This content is from children, plus text prop:Hello!')
     ).toBeInTheDocument()
@@ -124,8 +129,8 @@ export const TextAndChildren: Story = {
 }
 
 /**
- * 7) Interactive test: clicking or focusing (optional)
- *    Typically for typography, we don't do much interaction, but let's show an example
+ * 7) Interactive test: clicking or focusing
+ *    We do `await userEvent.click(textEl)`, so keep `async`.
  */
 export const Interactive: Story = {
   args: {

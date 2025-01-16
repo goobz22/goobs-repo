@@ -90,7 +90,7 @@ export const useRichTextEditor = (
         match: n =>
           isCustomElement(n) && property in n && n[property] === format,
       })
-    ) as NodeEntry<Node>[]
+    )
     return !!match
   }
 
@@ -141,7 +141,7 @@ export const useRichTextEditor = (
 
     if (!isActive && isList) {
       const block: RichTextEditorTypes['CustomElement'] = {
-        type: format as 'bulleted-list' | 'numbered-list',
+        type: format,
         children: [],
       }
       Transforms.wrapNodes(editor, block)
@@ -161,7 +161,7 @@ export const useRichTextEditor = (
         },
         mode: 'all',
       })
-    ) as NodeEntry<Node>[]
+    )
 
     const isActive = !!match
 
@@ -194,7 +194,7 @@ export const useRichTextEditor = (
     )
     if (nodes.length > 0) {
       const [node] = nodes
-      const link = node[0] as RichTextEditorTypes['CustomElement']
+      const link = node[0]
       url = window.prompt('Edit the URL of the link:', link.url)
       if (!url) return
       Transforms.setNodes<RichTextEditorTypes['CustomElement']>(

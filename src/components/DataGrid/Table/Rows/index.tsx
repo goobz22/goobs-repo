@@ -6,6 +6,36 @@ import StyledTooltip from '../../../Tooltip'
 import type { RowData, ColumnDef } from '../../types'
 import { getRowId } from '../index'
 
+/**
+ * Safely convert a value to a string without triggering the default
+ * '[object Object]' for objects. If the type is:
+ *  - string/number/boolean => return it (lowercased if desired).
+ *  - object => JSON.stringify it (or fallback to '').
+ *  - null/undefined => ''.
+ *  - otherwise => ''.
+ */
+function safeString(value: unknown): string {
+  if (value == null) return ''
+
+  switch (typeof value) {
+    case 'string':
+      // Return the string as-is or .toLowerCase() if you want consistency:
+      return value
+    case 'number':
+    case 'boolean':
+      return String(value)
+    case 'object':
+      try {
+        return JSON.stringify(value)
+      } catch {
+        return ''
+      }
+    default:
+      // e.g., symbol, function => ''
+      return ''
+  }
+}
+
 interface RowsProps {
   rows: RowData[]
   finalDesktopColumns: ColumnDef[]
@@ -61,6 +91,9 @@ const Rows: React.FC<RowsProps> = ({
           const rowId = getRowId(row)
           const isSelected = selectedRowIds.includes(rowId)
 
+          // Safely stringify the mobile column value for tooltips
+          const cellValueStr = safeString(row[mobileSelectedColumn])
+
           return (
             <TableRow
               key={rowId}
@@ -91,14 +124,14 @@ const Rows: React.FC<RowsProps> = ({
                 }}
               >
                 <StyledTooltip
-                  title={String(row[mobileSelectedColumn] ?? '')}
+                  title={cellValueStr}
                   tooltipcolor="#444"
                   tooltipplacement="top"
                   offsetX={0}
                   offsetY={5}
                   arrow
                 >
-                  <span>{String(row[mobileSelectedColumn] ?? '')}</span>
+                  <span>{cellValueStr}</span>
                 </StyledTooltip>
               </TableCell>
             </TableRow>
@@ -147,6 +180,7 @@ const Rows: React.FC<RowsProps> = ({
                 const fieldToRender = actualCol?.field
                 const cellValue =
                   fieldToRender != null ? row[fieldToRender] : undefined
+                const cellValueStr = safeString(cellValue)
 
                 return (
                   <TableCell
@@ -156,18 +190,18 @@ const Rows: React.FC<RowsProps> = ({
                       whiteSpace: 'nowrap',
                       overflow: 'hidden',
                       textOverflow: 'ellipsis',
-                      paddingLeft: 5, // <--- changed to 5
+                      paddingLeft: 5,
                     }}
                   >
                     <StyledTooltip
-                      title={String(cellValue ?? '')}
+                      title={cellValueStr}
                       tooltipcolor="#444"
                       tooltipplacement="top"
                       offsetX={0}
                       offsetY={5}
                       arrow
                     >
-                      <span>{String(cellValue ?? '')}</span>
+                      <span>{cellValueStr}</span>
                     </StyledTooltip>
                   </TableCell>
                 )
@@ -185,8 +219,17 @@ const Rows: React.FC<RowsProps> = ({
                 }
                 cellContent = col.renderCell(cellParams)
               } else {
-                cellContent = String(row[col.field] ?? '')
+                // Because row[col.field] is unknown, cast to ReactNode or fallback to a string
+                const val = row[col.field] as React.ReactNode | undefined
+                // If it's not a valid ReactNode (e.g. object?), fallback to string:
+                cellContent =
+                  val && (typeof val === 'string' || React.isValidElement(val))
+                    ? val
+                    : safeString(val)
               }
+
+              // Tooltip text needs a string, so convert cellContent safely
+              const cellContentStr = safeString(cellContent)
 
               // Respect manual widths if present
               const widthStyles = col.width
@@ -212,18 +255,19 @@ const Rows: React.FC<RowsProps> = ({
                     whiteSpace: 'nowrap',
                     overflow: 'hidden',
                     textOverflow: 'ellipsis',
-                    paddingLeft: 1, // <--- changed to 5
+                    paddingLeft: 1, // or 5 if desired
                     ...widthStyles,
                   }}
                 >
                   <StyledTooltip
-                    title={String(cellContent ?? '')}
+                    title={cellContentStr}
                     tooltipcolor="#444"
                     tooltipplacement="top"
                     offsetX={0}
                     offsetY={5}
                     arrow
                   >
+                    {/* If renderCell gave a React node, show that; otherwise it's a string. */}
                     <span>{cellContent}</span>
                   </StyledTooltip>
                 </TableCell>
