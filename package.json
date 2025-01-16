@@ -1,6 +1,6 @@
 {
   "name": "goobs-frontend",
-  "version": "0.8.23",
+  "version": "0.8.24",
   "type": "module",
   "description": "A comprehensive React-based UI library built on Material-UI, offering a wide range of customizable components including grids, typography, buttons, cards, forms, navigation, pricing tables, steppers, tooltips, accordions, and more. Designed for building responsive and consistent user interfaces with advanced features like form validation, theming, and code syntax highlighting.",
   "license": "MIT",
@@ -16,7 +16,10 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "storybook": "storybook dev -p 6006",
+    "chromatic": "chromatic --project-token=chpt_2d34a5f45351b6c",
+    "build-storybook": "storybook build"
   },
   "dependencies": {
     "@emotion/cache": "^11.14.0",
@@ -37,20 +40,32 @@
     "slate-dom": "^0.111.0",
     "slate-history": "^0.110.3",
     "slate-react": "^0.112.0",
+    "storybook": "^8.4.7",
     "zod": "^3.24.1",
     "zod-formik-adapter": "^1.3.0"
   },
   "devDependencies": {
+    "@chromatic-com/storybook": "^3.2.3",
     "@next/eslint-plugin-next": "^15.1.4",
+    "@storybook/addon-essentials": "^8.4.7",
+    "@storybook/addon-interactions": "^8.4.7",
+    "@storybook/addon-onboarding": "8.4.7",
+    "@storybook/blocks": "8.4.7",
+    "@storybook/nextjs": "^8.4.7",
+    "@storybook/react": "^8.4.7",
+    "@storybook/test": "^8.4.7",
+    "@storybook/testing-library": "^0.2.2",
     "@types/node": "^22.10.5",
     "@types/react": "19.0.5",
     "@types/react-dom": "^19.0.3",
     "@typescript-eslint/eslint-plugin": "^8.19.1",
     "@typescript-eslint/parser": "^8.19.1",
+    "chromatic": "^11.24.0",
     "eslint": "^9.18.0",
     "eslint-config-next": "^15.1.4",
     "eslint-config-prettier": "^9.1.0",
     "eslint-plugin-prettier": "^5.2.1",
+    "eslint-plugin-storybook": "^0.11.2",
     "prettier": "^3.4.2",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
@@ -121,5 +136,10 @@
   "resolutions": {
     "string-width": "^4.2.3",
     "strip-ansi": "^6.0.1"
+  },
+  "eslintConfig": {
+    "extends": [
+      "plugin:storybook/recommended"
+    ]
   }
 }
