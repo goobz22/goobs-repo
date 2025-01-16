@@ -2,10 +2,7 @@ import path from 'path'
 import type { StorybookConfig } from '@storybook/nextjs'
 
 const config: StorybookConfig = {
-  stories: [
-    '../src/**/*.mdx',
-    '../src/**/*.stories.@(js|jsx|mjs|ts|tsx)',
-  ],
+  stories: ['../src/**/*.mdx', '../src/**/*.stories.@(js|jsx|mjs|ts|tsx)'],
   addons: [
     '@storybook/addon-onboarding',
     '@storybook/addon-essentials',
@@ -21,7 +18,7 @@ const config: StorybookConfig = {
       appDirectory: true,
       /**
        * If your Next config is a .ts file in the root,
-       * you can specify it explicitly. 
+       * you can specify it explicitly.
        * Otherwise, '@storybook/nextjs' should pick it up automatically.
        *
        * nextConfigPath: path.resolve(__dirname, '../next.config.ts'),
