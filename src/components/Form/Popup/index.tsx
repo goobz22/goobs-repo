@@ -9,6 +9,12 @@ import { ExtendedTypographyProps } from '../../Content/Structure/typography/useG
 
 export interface PopupProps {
   open: boolean
+  /**
+   * Optional flag indicating the popup should be closed.
+   * This is just for observing the internal 'closed' state externally,
+   * or forcing the component closed from outside.
+   */
+  close?: boolean
   title?: string
   description?: string
   grids?: ContentSectionProps['grids']
@@ -18,20 +24,32 @@ export interface PopupProps {
 
 function Popup({
   open,
+  close,
   title,
   description,
   grids,
   content,
   width = 450,
 }: PopupProps) {
-  // Local state that syncs with the `open` prop
+  // Local states that sync with props
   const [isOpen, setIsOpen] = useState(open)
+  const [, setIsClosed] = useState(!open)
 
-  // Whenever the `open` prop changes, sync our local state
+  // Sync local state with `open` prop whenever it changes
   useEffect(() => {
     setIsOpen(open)
+    setIsClosed(!open)
   }, [open])
 
+  // If the parent sets `close` explicitly, update local states accordingly
+  useEffect(() => {
+    if (typeof close === 'boolean') {
+      setIsOpen(!close)
+      setIsClosed(close)
+    }
+  }, [close])
+
+  // Memoized grids for the header
   const headerGrid = useMemo(
     (): ContentSectionProps['grids'][0] => ({
       grid: {
@@ -90,6 +108,7 @@ function Popup({
   // Handle close (icon & outside/backdrop)
   const handleClose = () => {
     setIsOpen(false)
+    setIsClosed(true)
   }
 
   return (
