@@ -1,24 +1,22 @@
+// src\components\Card\variants\task\index.tsx
 'use client'
 
 import React from 'react'
-import { Paper, Box, Checkbox } from '@mui/material'
+import { Paper, Box, Checkbox, PaperProps } from '@mui/material'
 import Typography from '../../../../components/Typography'
 
-interface TaskCardProps {
+/**
+ * A simpler definition: we extend PaperProps directly
+ * but REMOVE all drag-related props.
+ */
+interface TaskCardProps extends PaperProps {
   title?: string
   description?: string
   /** Whether the card is currently checked/selected. */
   checked?: boolean
   /** Called when the user toggles the checkbox. */
   onCheck?: (event: React.ChangeEvent<HTMLInputElement>) => void
-  /** Whether this card is “draggable.” Typically true only if `checked` is true. */
-  draggable?: boolean
-  /** Drag event handlers from your board logic. */
-  onDragStart?: (e: React.DragEvent<HTMLDivElement>) => void
-  onDragOver?: (e: React.DragEvent<HTMLDivElement>) => void
-  onDrop?: (e: React.DragEvent<HTMLDivElement>) => void
 
-  width?: string
   height?: string | number
 }
 
@@ -27,35 +25,28 @@ const TaskCard: React.FC<TaskCardProps> = ({
   description = 'Description',
   checked = false,
   onCheck,
-  draggable = false, // default to not draggable
-  onDragStart,
-  onDragOver,
-  onDrop,
-  width = '100%',
   height = 'auto',
+  sx,
+  ...rest
 }) => {
   return (
     <Paper
       elevation={1}
-      /* 
-        Make the entire Paper draggable if the parent says so 
-        (based on whether it’s selected).
-      */
-      draggable={draggable}
-      onDragStart={onDragStart}
-      onDragOver={onDragOver}
-      onDrop={onDrop}
       sx={{
         position: 'relative',
         display: 'flex',
         flexDirection: 'column',
         justifyContent: 'flex-start',
         alignItems: 'flex-start',
-        width,
-        height,
+
+        // Default width/height (can be overridden by sx)
+        ...(height && { height }),
+
         p: 2,
         border: '1px solid #e8e8e8',
+        ...sx,
       }}
+      {...rest}
     >
       {/* A checkbox in the upper-right corner */}
       <Checkbox

@@ -11,9 +11,6 @@ interface InventoryCardProps {
   title?: string
   /** URL or path of the image to display */
   image?: string
-  /** Width of the inventory card */
-  width?: string
-  /** Height of the inventory card */
   height?: string | number
   /** License information for the item */
   license?: string
@@ -38,7 +35,6 @@ interface InventoryCardProps {
 const InventoryCard: React.FC<InventoryCardProps> = ({
   title,
   image,
-  width,
   height,
   license,
   developmentUse,
@@ -58,7 +54,6 @@ const InventoryCard: React.FC<InventoryCardProps> = ({
         justifyContent: 'flex-start',
         alignItems: 'stretch',
         border: '1px solid #e8e8e8',
-        width: width,
         minHeight: height,
       }}
     >

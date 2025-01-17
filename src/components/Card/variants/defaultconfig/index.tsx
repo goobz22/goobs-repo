@@ -44,7 +44,6 @@ interface DefaultCardProps extends BoxProps {
   /** Whether to enable links */
   linkEnabled?: boolean
   /** Width of the card */
-  width?: string
   /** Height of the card */
   height?: string | number
   /** Whether to show a stepper */

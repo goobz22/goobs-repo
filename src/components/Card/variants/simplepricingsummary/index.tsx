@@ -7,8 +7,6 @@ import CustomButton from '../../../../components/Button'
  * Props for the SimplePricingSummary component.
  */
 interface SimplePricingSummaryProps {
-  /** Width of the pricing summary card */
-  width?: string
   /** Height of the pricing summary card */
   height?: string | number
   /** Subtotal amount */
@@ -30,7 +28,6 @@ interface SimplePricingSummaryProps {
  * including subtotal, total, proceed button, and additional information about taxes and discounts.
  */
 const SimplePricingSummary: React.FC<SimplePricingSummaryProps> = ({
-  width = '100%',
   height,
   subtotal = 'USD 180.00',
   total = 'USD 180.00',
@@ -49,7 +46,6 @@ const SimplePricingSummary: React.FC<SimplePricingSummaryProps> = ({
         justifyContent: 'flex-start',
         alignItems: 'stretch',
         border: '1px solid #e8e8e8',
-        width: width,
         minHeight: height,
         padding: '16px',
       }}

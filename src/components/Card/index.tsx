@@ -1,7 +1,8 @@
+// src\components\Card\index.tsx
 'use client'
 
-import React, { JSX } from 'react'
-import { BoxProps } from '@mui/material'
+import React from 'react'
+import { Box, BoxProps } from '@mui/material'
 import { CustomStepperProps } from '../Stepper'
 import InventoryCard from './variants/inventory'
 import SimplePricingSummary from './variants/simplepricingsummary'
@@ -9,18 +10,24 @@ import DetailedPricingSummary from './variants/detailedpricingsummary'
 import ProductCard from './variants/product'
 import ProductSummaryCard from './variants/productsummary'
 import DefaultCard from './variants/defaultconfig'
-import TaskCard from './variants/task' // <-- NEW
+import TaskCard from './variants/task'
 import { columnconfig } from '../Grid'
 import { CustomButtonProps } from '../Button'
 
 /**
- * We omit children, draggable, and the drag event props from BoxProps,
- * to avoid conflicts with our custom "draggable" and "onDragX" logic
- * for the task variant.
+ * We omit children, draggable, and drag event props from BoxProps,
+ * to avoid type conflicts with MUI. We also omit `color`/`border`
+ * so they don’t conflict with PaperProps in <TaskCard>.
  */
 type CardProps = Omit<
   BoxProps,
-  'children' | 'draggable' | 'onDragStart' | 'onDragOver' | 'onDrop'
+  | 'children'
+  | 'draggable'
+  | 'onDragStart'
+  | 'onDragOver'
+  | 'onDrop'
+  | 'color'
+  | 'border'
 > & {
   /** Title of the card */
   title?: string
@@ -48,8 +55,18 @@ type CardProps = Omit<
   breadcrumbEnabled?: boolean
   /** Whether to enable links */
   linkEnabled?: boolean
-  /** Width of the card */
-  width?: string
+  /**
+   * Width of the card. Can be a string/number or MUI responsive object, e.g.:
+   *   width={{
+   *     xs: 250,
+   *     sm: 300,
+   *     md: 400
+   *   }}
+   */
+  width?:
+    | string
+    | number
+    | Partial<Record<'xs' | 'sm' | 'md' | 'lg' | 'xl', string | number>>
   /** Height of the card */
   height?: string | number
   /** Whether to show a stepper */
@@ -66,7 +83,7 @@ type CardProps = Omit<
     | 'detailedpricingsummary'
     | 'product'
     | 'productsummary'
-    | 'task' // <-- NEW
+    | 'task'
   /** Props for the pricing summary variant */
   pricingSummaryProps?: {
     subtotal?: string
@@ -142,7 +159,6 @@ type CardProps = Omit<
     /**
      * Optional drag & drop props if you want the card itself
      * to handle drag events.
-     * Must be booleans or DragEventHandlers, not strings like "true".
      */
     draggable?: boolean
     onDragStart?: React.DragEventHandler<HTMLDivElement>
@@ -180,109 +196,134 @@ function Card({
   productSummaryProps,
   taskProps,
   ...rest
-}: CardProps): JSX.Element | null {
+}: CardProps): React.ReactNode | null {
+  // --------------------------
+  // 1. "DEFAULT" VARIANT
+  // --------------------------
   if (variant === 'default') {
     return (
-      <DefaultCard
-        title={title}
-        titleUnderline={titleUnderline}
-        body={body}
-        image={image}
-        imagePosition={imagePosition}
-        parentText={parentText}
-        parentLink={parentLink}
-        childText={childText}
-        childLink={childLink}
-        grandchildLink={grandchildLink}
-        favoriteEnabled={favoriteEnabled}
-        breadcrumbEnabled={breadcrumbEnabled}
-        linkEnabled={linkEnabled}
-        width={width}
-        height={height}
-        stepperEnabled={stepperEnabled}
-        stepperActiveStep={stepperActiveStep}
-        stepperSteps={stepperSteps}
-        {...rest}
-      />
+      <Box sx={{ width, height }} {...rest}>
+        <DefaultCard
+          title={title}
+          titleUnderline={titleUnderline}
+          body={body}
+          image={image}
+          imagePosition={imagePosition}
+          parentText={parentText}
+          parentLink={parentLink}
+          childText={childText}
+          childLink={childLink}
+          grandchildLink={grandchildLink}
+          favoriteEnabled={favoriteEnabled}
+          breadcrumbEnabled={breadcrumbEnabled}
+          linkEnabled={linkEnabled}
+          height={height}
+          stepperEnabled={stepperEnabled}
+          stepperActiveStep={stepperActiveStep}
+          stepperSteps={stepperSteps}
+        />
+      </Box>
     )
   }
 
+  // --------------------------
+  // 2. "INVENTORY" VARIANT
+  // --------------------------
   if (variant === 'inventory') {
     return (
-      <InventoryCard
-        title={title}
-        image={image}
-        width={width}
-        height={height}
-        {...inventoryProps}
-        {...rest}
-      />
+      <Box sx={{ width, height }} {...rest}>
+        <InventoryCard
+          title={title}
+          image={image}
+          height={height}
+          {...inventoryProps}
+        />
+      </Box>
     )
   }
 
+  // --------------------------
+  // 3. "PRICINGSUMMARY" VARIANT
+  // --------------------------
   if (variant === 'pricingsummary') {
     return (
-      <SimplePricingSummary
-        width={width}
-        height={height}
-        {...pricingSummaryProps}
-        {...rest}
-      />
+      <Box sx={{ width, height }} {...rest}>
+        <SimplePricingSummary height={height} {...pricingSummaryProps} />
+      </Box>
     )
   }
 
+  // --------------------------
+  // 4. "DETAILEDPRICINGSUMMARY" VARIANT
+  // --------------------------
   if (variant === 'detailedpricingsummary') {
     return (
-      <DetailedPricingSummary
-        width={width}
-        height={height}
-        {...detailedPricingSummaryProps}
-        {...rest}
-      />
+      <Box sx={{ width, height }} {...rest}>
+        <DetailedPricingSummary
+          height={height}
+          {...detailedPricingSummaryProps}
+        />
+      </Box>
     )
   }
 
+  // --------------------------
+  // 5. "PRODUCT" VARIANT
+  // --------------------------
   if (variant === 'product') {
     return (
-      <ProductCard width={width} height={height} {...productProps} {...rest} />
+      <Box sx={{ width, height }} {...rest}>
+        <ProductCard height={height} {...productProps} />
+      </Box>
     )
   }
 
+  // --------------------------
+  // 6. "PRODUCTSUMMARY" VARIANT
+  // --------------------------
   if (variant === 'productsummary') {
     return (
-      <ProductSummaryCard
-        title={title}
-        body={body}
-        annualPrice={productSummaryProps?.annualPrice}
-        monthlyPrice={productSummaryProps?.monthlyPrice}
-        width={width}
-        height={height}
-        button1Props={productSummaryProps?.button1Props}
-        button2Props={productSummaryProps?.button2Props}
-        {...rest}
-      />
+      <Box sx={{ width, height }} {...rest}>
+        <ProductSummaryCard
+          title={title}
+          body={body}
+          annualPrice={productSummaryProps?.annualPrice}
+          monthlyPrice={productSummaryProps?.monthlyPrice}
+          height={height}
+          button1Props={productSummaryProps?.button1Props}
+          button2Props={productSummaryProps?.button2Props}
+        />
+      </Box>
     )
   }
 
-  // NEW: Return our "task" variant
+  // --------------------------
+  // 7. "TASK" VARIANT
+  // --------------------------
   if (variant === 'task') {
+    // We handle drag & drop on this outer Box, plus the width/height here
     return (
-      <TaskCard
-        title={taskProps?.title}
-        description={taskProps?.description}
-        checked={taskProps?.checked}
-        onCheck={taskProps?.onCheck}
+      <Box
         draggable={taskProps?.draggable}
         onDragStart={taskProps?.onDragStart}
         onDragOver={taskProps?.onDragOver}
         onDrop={taskProps?.onDrop}
-        width={width}
-        height={height}
+        sx={{ width, height }}
         {...rest}
-      />
+      >
+        <TaskCard
+          title={taskProps?.title}
+          description={taskProps?.description}
+          checked={taskProps?.checked}
+          onCheck={taskProps?.onCheck}
+        />
+      </Box>
     )
   }
 
+  // --------------------------
+  // FALLBACK: NO MATCH
+  // --------------------------
   return null
 }
 

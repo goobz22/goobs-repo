@@ -30,7 +30,6 @@ const ProductSummaryCard: React.FC<ProductSummaryCardProps> = ({
   body,
   annualPrice,
   monthlyPrice,
-  width,
   height,
   button1Props,
   button2Props,
@@ -56,7 +55,6 @@ const ProductSummaryCard: React.FC<ProductSummaryCardProps> = ({
         justifyContent: 'flex-start',
         alignItems: 'stretch',
         border: '1px solid #e8e8e8',
-        width: width,
         height: height,
         ...rest.sx,
       }}

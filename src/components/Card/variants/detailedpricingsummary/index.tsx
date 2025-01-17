@@ -34,7 +34,6 @@ interface DetailedPricingSummaryProps {
  * It displays product details, vendor information, subtotal, VAT, total, and a proceed button.
  */
 const DetailedPricingSummary: React.FC<DetailedPricingSummaryProps> = ({
-  width = '100%',
   height,
   product = 'Goobs Repo Unlimited × 1',
   vendor = 'Technologies Unlimited',
@@ -55,7 +54,6 @@ const DetailedPricingSummary: React.FC<DetailedPricingSummaryProps> = ({
         justifyContent: 'flex-start',
         alignItems: 'stretch',
         border: '1px solid #e8e8e8',
-        width: width,
         minHeight: height,
         padding: '16px',
       }}
