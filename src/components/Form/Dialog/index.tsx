@@ -1,14 +1,12 @@
 'use client'
 
-import React, { useMemo, useState, useEffect } from 'react'
-import { Close } from '@mui/icons-material'
-import { Dialog, IconButton, Box } from '@mui/material'
+import React, { useMemo } from 'react'
+import { Dialog, Box } from '@mui/material'
 import ContentSection, { ContentSectionProps } from '../../Content'
 import { formContainerStyle } from '../../../styles/Form'
 import { ExtendedTypographyProps } from '../../Content/Structure/typography/useGridTypography'
 
-export interface PopupProps {
-  open: boolean
+export interface DialogFormProps {
   title?: string
   description?: string
   grids?: ContentSectionProps['grids']
@@ -16,21 +14,14 @@ export interface PopupProps {
   width?: number
 }
 
-function Popup({
-  open,
+function CustomDialog({
   title,
   description,
   grids,
   content,
   width = 450,
-}: PopupProps) {
-  // Local state that syncs with the `open` prop
-  const [isOpen, setIsOpen] = useState(open)
-
-  // Whenever the `open` prop changes, sync our local state
-  useEffect(() => {
-    setIsOpen(open)
-  }, [open])
+}: DialogFormProps) {
+  // We render this dialog as always open (embedded in pages).
 
   const headerGrid = useMemo(
     (): ContentSectionProps['grids'][0] => ({
@@ -87,46 +78,22 @@ function Popup({
     [renderHeader, content, grids]
   )
 
-  // Handle close (icon & outside/backdrop)
-  const handleClose = () => {
-    setIsOpen(false)
-  }
-
   return (
     <Dialog
-      open={isOpen}
-      onClose={handleClose} // Clicking outside/backdrop or pressing ESC triggers this
+      open
+      // No close icon, no user-initiated closing from outside or ESC
+      onClose={() => {}}
       fullWidth
       maxWidth={false}
       PaperProps={{
         style: {
           width: `${width}px`,
-          // ensure pointer events are enabled inside the Dialog
-          pointerEvents: 'auto',
         },
       }}
     >
-      <IconButton
-        size="small"
-        onClick={handleClose}
-        sx={{
-          position: 'absolute',
-          right: 8,
-          top: 8,
-          color: theme => theme.palette.grey[500],
-          // Ensure it's on top and clickable
-          zIndex: theme => theme.zIndex.modal + 1,
-          cursor: 'pointer', // Explicitly show pointer
-          '&:hover': {
-            color: theme => theme.palette.grey[700],
-          },
-        }}
-      >
-        <Close />
-      </IconButton>
       {renderContent}
     </Dialog>
   )
 }
 
-export default Popup
+export default CustomDialog
