@@ -19,7 +19,8 @@ import RadioGroup, {
   RadioOption,
   RadioGroupProps,
 } from './components/RadioGroup'
-import PopupForm, { PopupFormProps } from './components/Form/Popup'
+import PopupForm, { PopupProps } from './components/Form/Popup'
+import Dialog, { DialogFormProps } from './components/Form/Dialog'
 import ContentSection, { ContentSectionProps } from './components/Content'
 import {
   Accordion,
@@ -250,7 +251,7 @@ export { PasswordField }
 export { PhoneNumberField }
 export { Searchbar }
 export { TextField }
-
+export { Dialog }
 // Add FormDataGrid to named exports
 export { FormDataGrid }
 export { FormProjectBoard }
@@ -297,7 +298,8 @@ export type { columnconfig, gridconfig, cellconfig }
 export type { FontFamily, TypographyVariant, TypographyProps }
 export type { ConfirmationCodeInputsProps }
 export type { RadioOption, RadioGroupProps }
-export type { PopupFormProps }
+export type { PopupProps }
+export type { DialogFormProps }
 export type { ContentSectionProps }
 export type { CardProps }
 export type { CodeCopyProps }
