@@ -360,9 +360,7 @@ const AddTask: React.FC<AddTaskProps> = ({
   // -------------------------------------------------------------------------
   return (
     <PopupForm
-      popupType="dialog"
       open={open}
-      onClose={onClose}
       title="Create Task"
       width={700}
       grids={[mainGrid, buttonGrid]}
