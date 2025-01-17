@@ -4,11 +4,11 @@
 import React, { useState } from 'react'
 import { Box, Stack } from '@mui/material'
 import Toolbar from '../Toolbar'
-import Column from './Column'
 import AddTask from './AddTask/client'
 import ManageTask from './ManageTask/client'
 import ShowTask from './ShowTask/client'
 import { useDragAndDropColumns } from './utils/useDragandDropColumns'
+import Column from './Column'
 
 /** A minimal typed comment for any type of task. */
 export type Comment = {
@@ -21,7 +21,6 @@ export type Comment = {
 /**
  * A generic "Task" type for your boards.
  * It can store severityId, statusId, substatusId, schedulingQueueId, topicIds, etc.
- * This way, we don't need separate interfaces for each variant.
  */
 export type Task = {
   _id: string
@@ -203,7 +202,6 @@ function mergeColumnsAndTasks(
 ): ColumnData[] {
   return columns.map(col => {
     const colId = col._id
-
     const matchingTasks = tasks.filter(task => {
       switch (boardType) {
         case 'severityLevel':
@@ -218,7 +216,6 @@ function mergeColumnsAndTasks(
           return false
       }
     })
-
     return { ...col, tasks: matchingTasks }
   })
 }
@@ -382,7 +379,7 @@ function ProjectBoard({
     }
   }
 
-  // 6) Toolbar
+  // 6) Toolbar (the same for all layouts)
   const buttons = [
     {
       text: 'Create Task',
@@ -408,43 +405,43 @@ function ProjectBoard({
     },
   ]
 
-  // For "company" variant, build an array of accounts
-  const companyAccounts = company
-    ? [{ _id: company._id, companyName: company.companyName }]
-    : []
-
-  // A dummy list of "administrators" from employees:
+  // A dummy list of "administrators" from employees (for ManageTask):
   const administrators = rawEmployees.map(emp => ({
     _id: emp._id,
     fullName: `${emp.firstName ?? ''} ${emp.lastName ?? ''}`.trim(),
   }))
 
+  // For "company" variant, build an array of accounts (for ManageTask):
+  const companyAccounts = company
+    ? [{ _id: company._id, companyName: company.companyName }]
+    : []
+
   return (
     <Box sx={{ boxSizing: 'border-box', width: '100%', height: '100%' }}>
       <Toolbar buttons={buttons} />
 
+      {/* 
+        Render a single <Column />. 
+        That Column is now responsible for:
+          - On desktop: showing all columns side by side
+          - On mobile: showing only one column with a dropdown to select which one
+       */}
       <Stack direction="row" spacing={3} mt={1} pl={4}>
-        {columnState.map((col, idx) => (
-          <Column
-            key={col._id}
-            index={idx}
-            title={col.title}
-            description={col.description}
-            tasks={col.tasks}
-            // Column-level DnD
-            onColumnDragStart={handleColumnDragStart}
-            onColumnDragOver={handleColumnDragOver}
-            onColumnDrop={handleColumnDrop}
-            // Task-level DnD
-            onTaskDragStart={(e, colI, taskI) =>
-              handleTaskDragStart(e, colI, taskI, selectedTask)
-            }
-            onTaskDragOver={handleTaskDragOver}
-            onTaskDragDrop={handleTaskDrop}
-            selectedTask={selectedTask}
-            onSelectTask={handleSelectTask}
-          />
-        ))}
+        <Column
+          columns={columnState}
+          selectedTask={selectedTask}
+          onSelectTask={handleSelectTask}
+          // Column-level DnD
+          onColumnDragStart={handleColumnDragStart}
+          onColumnDragOver={handleColumnDragOver}
+          onColumnDrop={handleColumnDrop}
+          // Task-level DnD
+          onTaskDragStart={(e, colI, taskI) =>
+            handleTaskDragStart(e, colI, taskI, selectedTask)
+          }
+          onTaskDragOver={handleTaskDragOver}
+          onTaskDragDrop={handleTaskDrop}
+        />
       </Stack>
 
       {/* AddTask */}

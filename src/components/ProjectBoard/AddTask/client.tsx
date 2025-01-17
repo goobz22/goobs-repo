@@ -1,23 +1,12 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
-import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Box,
-} from '@mui/material'
 
-// Custom components
-import CustomButton from '../../Button'
-import Dropdown from '../../Dropdown'
-import TextField from '../../TextField'
-import ComplexTextEditor from '../../ComplexTextEditor'
-import TransferList from '../../TransferList'
+// Your PopupForm + ContentSection types
+import PopupForm from '../../Form/Popup'
+import { ContentSectionProps } from '../../Content'
 
-// Import the new generic "Task" type and the "AddTaskVariant" from your code
-// Adjust import paths as needed
+// Types from "../index"
 import type {
   Task,
   RawStatus,
@@ -30,32 +19,30 @@ import type {
   RawSeverityLevel,
 } from '../index'
 
-/**
- * We define 3 variants for AddTask:
- *   - "customer": Shows "Customer Account" + "Assigned Employee"
- *   - "company":  Shows "Company Account" + "Assigned Administrator"
- *   - "administrator": Hides those "Account" fields entirely
- */
 export type AddTaskVariant = 'customer' | 'company' | 'administrator'
 
 export interface AddTaskProps {
   open: boolean
   onClose: () => void
   /**
-   * Called when the user clicks "Submit." We pass back an Omit<Task, '_id'>,
-   * letting the parent create a new ID or store it in a DB.
+   * Called when the user clicks "Create Task."
+   * We pass back an Omit<Task, '_id'> that the parent can store.
    */
   onSubmit: (newTask: Omit<Task, '_id'>) => void
-
-  /** If not provided, defaults to "customer." */
+  /**
+   * Controls which fields appear:
+   *   - 'customer'
+   *   - 'company'
+   *   - 'administrator'
+   */
   variant?: AddTaskVariant
 
-  // Data for dropdowns, transfer list, etc.
+  /** Data for the various dropdowns, etc. */
   statuses: RawStatus[]
   subStatuses: RawSubStatus[]
   topics: RawTopic[]
   schedulingQueues: RawQueue[]
-  knowledgebaseArticles: RawArticle[] // not used here, but you can if desired
+  knowledgebaseArticles: RawArticle[]
   customers: RawCustomer[]
   employees: RawEmployee[]
   severityLevels: RawSeverityLevel[]
@@ -65,7 +52,7 @@ const AddTask: React.FC<AddTaskProps> = ({
   open,
   onClose,
   onSubmit,
-  variant = 'customer', // default
+  variant = 'customer',
   statuses,
   subStatuses,
   topics,
@@ -77,9 +64,10 @@ const AddTask: React.FC<AddTaskProps> = ({
   // -------------------------------------------------------------------------
   // 1) Local state for fields
   // -------------------------------------------------------------------------
-  const [selectedAccount, setSelectedAccount] = useState('') // for "customer" or "company" account
-  const [selectedAdministrator, setSelectedAdministrator] = useState('') // for "company" only
-  const [selectedEmployee, setSelectedEmployee] = useState('') // for "customer" only
+  // If variant="customer", store customerId + assignedEmployee (employeeIds)
+  const [selectedAccount, setSelectedAccount] = useState('') // for "customer" or "company"
+  const [selectedAdministrator, setSelectedAdministrator] = useState('') // for "company"
+  const [selectedEmployee, setSelectedEmployee] = useState('') // for "customer"
 
   const [selectedSeverity, setSelectedSeverity] = useState('')
   const [selectedQueue, setSelectedQueue] = useState('')
@@ -106,24 +94,28 @@ const AddTask: React.FC<AddTaskProps> = ({
   // 3) Convert raw data to dropdown-friendly arrays
   // -------------------------------------------------------------------------
   const severityOptions = severityLevels.map(sl => ({
-    value: String(sl.severityLevel), // or sl._id if you prefer
+    value: sl._id, // or sl._id if you store it that way
   }))
-  const statusOptions = statuses.map(s => ({ value: s.status }))
-  const subStatusOptions = subStatuses.map(s => ({ value: s.subStatus }))
-  const queueOptions = schedulingQueues.map(q => ({ value: q.queueName }))
+  const statusOptions = statuses.map(s => ({ value: s._id }))
+  const subStatusOptions = subStatuses.map(s => ({ value: s._id }))
+  const queueOptions = schedulingQueues.map(q => ({ value: q._id }))
+
   const customerOptions = customers.map(c => ({
     value: c._id || '',
     attribute1: [c.firstName, c.lastName].filter(Boolean).join(' '),
   }))
+
+  // Example "company accounts" (placeholder). You could also supply these from props.
+  const companyAccountOptions = [{ value: 'AcmeInc' }, { value: 'TechCorp' }]
+
+  // For assigning employees or administrators
   const employeeOptions = employees.map(e => ({
     value: e._id || '',
     attribute1: [e.firstName, e.lastName].filter(Boolean).join(' '),
   }))
-  // If you have actual "company accounts," map them too. For now, placeholders:
-  const companyAccountOptions = [{ value: 'AcmeInc' }, { value: 'TechCorp' }]
 
   // -------------------------------------------------------------------------
-  // 4) TransferList Handler
+  // 4) TransferList handler
   // -------------------------------------------------------------------------
   const handleTopicsChange = (left: string[], right: string[]) => {
     setUnassignedTopics(left)
@@ -134,153 +126,247 @@ const AddTask: React.FC<AddTaskProps> = ({
   // 5) Handle "Submit"
   // -------------------------------------------------------------------------
   const handleSubmit = () => {
-    // Build an Omit<Task, '_id'> to pass upward
+    // Build an Omit<Task, '_id'> that matches your Task interface fields
     const newTaskData: Omit<Task, '_id'> = {
       title: taskTitle,
       description: taskDescription,
       topicIds: assignedTopics,
-      // For real usage, add fields like severity or queue as you need
+    }
+
+    // Severity => severityId
+    if (selectedSeverity) {
+      newTaskData.severityId = selectedSeverity
+    }
+
+    // Scheduling queue => schedulingQueueId
+    if (selectedQueue) {
+      newTaskData.schedulingQueueId = selectedQueue
+    }
+
+    // Status => statusId
+    if (selectedStatus) {
+      newTaskData.statusId = selectedStatus
+    }
+
+    // Substatus => substatusId
+    if (selectedSubStatus) {
+      newTaskData.substatusId = selectedSubStatus
+    }
+
+    // Variant-specific fields
+    if (variant === 'customer') {
+      // "Customer Account" => newTaskData.customerId
+      newTaskData.customerId = selectedAccount || undefined
+      // "Assigned Employee" => newTaskData.employeeIds = [selectedEmployee]
+      if (selectedEmployee) {
+        newTaskData.employeeIds = [selectedEmployee]
+      }
+    } else if (variant === 'company') {
+      // "Company Account" => newTaskData.companyId
+      newTaskData.companyId = selectedAccount || undefined
+      // "Assigned Administrator" => newTaskData.employeeIds = [selectedAdministrator]
+      if (selectedAdministrator) {
+        newTaskData.employeeIds = [selectedAdministrator]
+      }
+    } else if (variant === 'administrator') {
+      // e.g., no special account fields
+      // Possibly defaults or skip
     }
 
     onSubmit(newTaskData)
   }
 
   // -------------------------------------------------------------------------
-  // 6) Render
+  // 6) Type guard for filter(Boolean)-style usage
+  // -------------------------------------------------------------------------
+  function isDefinedDropdown<T>(val: T | false | null | undefined): val is T {
+    return Boolean(val)
+  }
+
+  // -------------------------------------------------------------------------
+  // 7) Define the grids for ContentSection
+  // -------------------------------------------------------------------------
+  const mainGrid: ContentSectionProps['grids'][0] = {
+    grid: {
+      gridconfig: {
+        gridwidth: '100%',
+      },
+    },
+    dropdown: (
+      [
+        // ----------------------------
+        // "customer" => Customer Account + Assigned Employee
+        // ----------------------------
+        variant === 'customer' && {
+          label: 'Customer Account',
+          name: 'customerAccount',
+          options: customerOptions,
+          value: selectedAccount,
+          onChange: (e: React.ChangeEvent<HTMLInputElement>) =>
+            setSelectedAccount(e.target.value),
+          columnconfig: { row: 1, column: 1, columnwidth: '50%' },
+        },
+        variant === 'customer' && {
+          label: 'Assigned Employee',
+          name: 'assignedEmployee',
+          options: employeeOptions,
+          value: selectedEmployee,
+          onChange: (e: React.ChangeEvent<HTMLInputElement>) =>
+            setSelectedEmployee(e.target.value),
+          columnconfig: { row: 1, column: 2, columnwidth: '50%' },
+        },
+
+        // ----------------------------
+        // "company" => Company Account + Assigned Administrator
+        // ----------------------------
+        variant === 'company' && {
+          label: 'Company Account',
+          name: 'companyAccount',
+          options: companyAccountOptions,
+          value: selectedAccount,
+          onChange: (e: React.ChangeEvent<HTMLInputElement>) =>
+            setSelectedAccount(e.target.value),
+          columnconfig: { row: 1, column: 1, columnwidth: '50%' },
+        },
+        variant === 'company' && {
+          label: 'Assigned Administrator',
+          name: 'assignedAdministrator',
+          options: employeeOptions,
+          value: selectedAdministrator,
+          onChange: (e: React.ChangeEvent<HTMLInputElement>) =>
+            setSelectedAdministrator(e.target.value),
+          columnconfig: { row: 1, column: 2, columnwidth: '50%' },
+        },
+
+        // ----------------------------
+        // row=2 => Severity, Queue (all variants)
+        // ----------------------------
+        {
+          label: 'Severity Level',
+          name: 'severityLevel',
+          options: severityOptions,
+          value: selectedSeverity,
+          onChange: (e: React.ChangeEvent<HTMLInputElement>) =>
+            setSelectedSeverity(e.target.value),
+          columnconfig: { row: 2, column: 1, columnwidth: '50%' },
+        },
+        {
+          label: 'Associated Product (Queue)',
+          name: 'associatedQueue',
+          options: queueOptions,
+          value: selectedQueue,
+          onChange: (e: React.ChangeEvent<HTMLInputElement>) =>
+            setSelectedQueue(e.target.value),
+          columnconfig: { row: 2, column: 2, columnwidth: '50%' },
+        },
+
+        // ----------------------------
+        // row=3 => Status, Substatus (all variants)
+        // ----------------------------
+        {
+          label: 'Status',
+          name: 'status',
+          options: statusOptions,
+          value: selectedStatus,
+          onChange: (e: React.ChangeEvent<HTMLInputElement>) =>
+            setSelectedStatus(e.target.value),
+          columnconfig: { row: 3, column: 1, columnwidth: '50%' },
+        },
+        {
+          label: 'Substatus',
+          name: 'substatus',
+          options: subStatusOptions,
+          value: selectedSubStatus,
+          onChange: (e: React.ChangeEvent<HTMLInputElement>) =>
+            setSelectedSubStatus(e.target.value),
+          columnconfig: { row: 3, column: 2, columnwidth: '50%' },
+        },
+      ] as (
+        | false
+        | {
+            label: string
+            name: string
+            options: { value: string; attribute1?: string }[]
+            value: string
+            onChange: (e: React.ChangeEvent<HTMLInputElement>) => void
+            columnconfig: { row: number; column: number; columnwidth: string }
+          }
+      )[]
+    ).filter(isDefinedDropdown),
+
+    // TransferList
+    transferlist: [
+      {
+        leftItems: unassignedTopics,
+        rightItems: assignedTopics,
+        leftTitle: 'Unassigned Topics',
+        rightTitle: 'Assigned Topics',
+        onChange: handleTopicsChange,
+        columnconfig: { row: 4, column: 1, columnwidth: '100%' },
+      },
+    ],
+
+    // Task Title
+    textfield: [
+      {
+        label: 'Task Title',
+        value: taskTitle,
+        onChange: (e: React.ChangeEvent<HTMLInputElement>) =>
+          setTaskTitle(e.target.value),
+        columnconfig: { row: 5, column: 1, columnwidth: '100%' },
+      },
+    ],
+
+    // Task Description
+    complexeditor: [
+      {
+        label: 'Task Description',
+        editorType: 'simple',
+        value: taskDescription,
+        minRows: 5,
+        onChange: (val: string) => setTaskDescription(val),
+        columnconfig: { row: 6, column: 1, columnwidth: '100%' },
+      },
+    ],
+  }
+
+  // Button grid (aligned to right)
+  const buttonGrid: ContentSectionProps['grids'][0] = {
+    grid: {
+      gridconfig: {
+        alignment: 'right',
+      },
+    },
+    button: [
+      {
+        text: 'Cancel',
+        backgroundcolor: 'none',
+        fontcolor: 'black',
+        onClick: onClose,
+        columnconfig: { row: 1, column: 1 },
+      },
+      {
+        text: 'Create Task',
+        backgroundcolor: '#1976d2',
+        fontcolor: 'white',
+        onClick: handleSubmit,
+        columnconfig: { row: 1, column: 2 },
+      },
+    ],
+  }
+
+  // -------------------------------------------------------------------------
+  // 8) Render
   // -------------------------------------------------------------------------
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
-      <DialogTitle>Create Task</DialogTitle>
-
-      <DialogContent>
-        <Box
-          sx={{
-            display: 'grid',
-            gridTemplateColumns: '1fr 1fr',
-            gap: '16px',
-            mb: 2,
-          }}
-        >
-          {/* ============== For "customer" variant ============== */}
-          {variant === 'customer' && (
-            <>
-              <Dropdown
-                label="Customer Account"
-                name="customerAccount"
-                options={customerOptions}
-                value={selectedAccount}
-                onChange={e => setSelectedAccount(e.target.value)}
-              />
-              <Dropdown
-                label="Assigned Employee"
-                name="assignedEmployee"
-                options={employeeOptions}
-                value={selectedEmployee}
-                onChange={e => setSelectedEmployee(e.target.value)}
-              />
-            </>
-          )}
-
-          {/* ============== For "company" variant ============== */}
-          {variant === 'company' && (
-            <>
-              <Dropdown
-                label="Company Account"
-                name="companyAccount"
-                options={companyAccountOptions}
-                value={selectedAccount}
-                onChange={e => setSelectedAccount(e.target.value)}
-              />
-              <Dropdown
-                label="Assigned Administrator"
-                name="assignedAdministrator"
-                options={employeeOptions} // or a separate "administrators" array
-                value={selectedAdministrator}
-                onChange={e => setSelectedAdministrator(e.target.value)}
-              />
-            </>
-          )}
-
-          {/* ============== For "administrator" variant ============== */}
-          {variant === 'administrator' && (
-            // Placeholder. If you need specialized fields, add them here
-            <></>
-          )}
-
-          {/* Now the next row: Severity, Queue, Status, Substatus (all variants) */}
-          <Dropdown
-            label="Severity Level"
-            name="severityLevel"
-            options={severityOptions}
-            value={selectedSeverity}
-            onChange={e => setSelectedSeverity(e.target.value)}
-          />
-          <Dropdown
-            label="Associated Product (Queue)"
-            name="associatedQueue"
-            options={queueOptions}
-            value={selectedQueue}
-            onChange={e => setSelectedQueue(e.target.value)}
-          />
-          <Dropdown
-            label="Status"
-            name="status"
-            options={statusOptions}
-            value={selectedStatus}
-            onChange={e => setSelectedStatus(e.target.value)}
-          />
-          <Dropdown
-            label="Substatus"
-            name="substatus"
-            options={subStatusOptions}
-            value={selectedSubStatus}
-            onChange={e => setSelectedSubStatus(e.target.value)}
-          />
-        </Box>
-
-        {/* TransferList for Topics */}
-        <Box sx={{ mb: 2 }}>
-          <TransferList
-            leftItems={unassignedTopics}
-            rightItems={assignedTopics}
-            onChange={(left, right) => handleTopicsChange(left, right)}
-            leftTitle="Unassigned Topics"
-            rightTitle="Assigned Topics"
-          />
-        </Box>
-
-        {/* The rest: Task Title, Task Description */}
-        <TextField
-          label="Task Title"
-          value={taskTitle}
-          onChange={e => setTaskTitle(e.target.value)}
-        />
-        <Box sx={{ mt: 2 }}>
-          <ComplexTextEditor
-            value={taskDescription}
-            onChange={val => setTaskDescription(val)}
-            label="Task Description"
-            minRows={5}
-            editorType="simple"
-          />
-        </Box>
-      </DialogContent>
-
-      <DialogActions>
-        <CustomButton
-          text="Cancel"
-          backgroundcolor="none"
-          fontcolor="black"
-          onClick={onClose}
-        />
-        <CustomButton
-          text="Submit"
-          backgroundcolor="#1976d2"
-          fontcolor="white"
-          onClick={handleSubmit}
-        />
-      </DialogActions>
-    </Dialog>
+    <PopupForm
+      popupType="dialog"
+      open={open}
+      onClose={onClose}
+      title="Create Task"
+      width={700}
+      grids={[mainGrid, buttonGrid]}
+    />
   )
 }
 
