@@ -17,7 +17,7 @@ import type {
   RawCustomer,
   RawEmployee,
   RawSeverityLevel,
-} from '../index'
+} from '../types'
 
 export type AddTaskVariant = 'customer' | 'company' | 'administrator'
 

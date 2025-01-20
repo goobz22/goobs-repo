@@ -24,7 +24,7 @@ import type {
   RawQueue,
   RawArticle,
   RawEmployee,
-} from '../index'
+} from '../types'
 
 // If you have real company or admin types, adapt them:
 interface CompanyAccount {
