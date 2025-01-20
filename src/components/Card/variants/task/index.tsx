@@ -5,18 +5,16 @@ import React from 'react'
 import { Paper, Box, Checkbox, PaperProps } from '@mui/material'
 import Typography from '../../../../components/Typography'
 
-/**
- * A simpler definition: we extend PaperProps directly
- * but REMOVE all drag-related props.
- */
 interface TaskCardProps extends PaperProps {
   title?: string
   description?: string
   /** Whether the card is currently checked/selected. */
   checked?: boolean
+  /** Disables the checkbox (prevents selection). */
+  disabled?: boolean
   /** Called when the user toggles the checkbox. */
   onCheck?: (event: React.ChangeEvent<HTMLInputElement>) => void
-
+  /** Height of the card. */
   height?: string | number
 }
 
@@ -24,6 +22,7 @@ const TaskCard: React.FC<TaskCardProps> = ({
   title = 'Task Title',
   description = 'Description',
   checked = false,
+  disabled = false, // <--- NEW
   onCheck,
   height = 'auto',
   sx,
@@ -51,6 +50,7 @@ const TaskCard: React.FC<TaskCardProps> = ({
       {/* A checkbox in the upper-right corner */}
       <Checkbox
         checked={checked}
+        disabled={disabled} // <--- NEW
         onChange={onCheck}
         color="primary"
         sx={{

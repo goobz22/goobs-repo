@@ -1,4 +1,3 @@
-// src\components\Card\index.tsx
 'use client'
 
 import React from 'react'
@@ -155,6 +154,9 @@ type CardProps = Omit<
     checked?: boolean
     /** Callback when the checkbox changes */
     onCheck?: (event: React.ChangeEvent<HTMLInputElement>) => void
+
+    /** Whether the task card is disabled */
+    disabled?: boolean // NEW
 
     /**
      * Optional drag & drop props if you want the card itself
@@ -316,6 +318,7 @@ function Card({
           description={taskProps?.description}
           checked={taskProps?.checked}
           onCheck={taskProps?.onCheck}
+          disabled={taskProps?.disabled} // NEW
         />
       </Box>
     )
