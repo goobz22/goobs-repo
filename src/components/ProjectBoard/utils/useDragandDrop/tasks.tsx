@@ -1,4 +1,3 @@
-// src\components\ProjectBoard\utils\useDragandDropColumns.tsx
 'use client'
 
 import React from 'react'
@@ -8,68 +7,39 @@ import type {
   BoardType,
   CompanyInfo,
   OnUpdateTaskArgs,
-} from '../index'
+} from '../../types'
+
+// The same DragItem shape used in columns.tsx
+type DragItem = {
+  type: 'column' | 'task'
+  columnIndex: number
+  taskIndex?: number
+} | null
 
 /**
- * This custom hook manages column-level (and optional task-level) drag and drop.
- * We also accept a "boardType" (e.g. "severityLevel", "status", "subStatus", "topic")
- * so we know which field on the task to update when the user drops it in a new column.
+ * Hook managing task-level drag and drop.
+ * Receives the same `dragItem` and `setDragItem` from useColumnDragAndDrop,
+ * so both columns and tasks share the same drag state.
  */
-export function useDragAndDropColumns(
+export function useTaskDragAndDrop(
   columnState: ColumnData[],
   setColumnState: React.Dispatch<React.SetStateAction<ColumnData[]>>,
+  dragItem: DragItem,
+  setDragItem: React.Dispatch<React.SetStateAction<DragItem>>,
   company: CompanyInfo | undefined,
   onUpdateTask?: (args: OnUpdateTaskArgs) => void,
   boardType?: BoardType // e.g. "severityLevel", "status", "subStatus", "topic"
 ) {
-  // We'll store info about what's being dragged
-  const [dragItem, setDragItem] = React.useState<{
-    type: 'column' | 'task'
-    columnIndex: number
-    taskIndex?: number
-  } | null>(null)
-
-  // A helper to reorder a list (for columns or tasks).
-  function reorder<T>(list: T[], startIndex: number, endIndex: number): T[] {
-    const result = Array.from(list)
-    const [removed] = result.splice(startIndex, 1)
-    result.splice(endIndex, 0, removed)
-    return result
-  }
-
-  // --------------------------------------------------------------------------
-  // COLUMN DRAG EVENTS
-  // --------------------------------------------------------------------------
-  const handleColumnDragStart = (e: React.DragEvent, columnIndex: number) => {
-    setDragItem({ type: 'column', columnIndex })
-  }
-
-  const handleColumnDragOver = (e: React.DragEvent) => {
-    e.preventDefault()
-  }
-
-  const handleColumnDrop = (e: React.DragEvent, dropColumnIndex: number) => {
-    e.preventDefault()
-    if (!dragItem || dragItem.type !== 'column') {
-      setDragItem(null)
-      return
-    }
-
-    const newCols = reorder(columnState, dragItem.columnIndex, dropColumnIndex)
-    setColumnState(newCols)
-    setDragItem(null)
-  }
-
   // --------------------------------------------------------------------------
   // TASK DRAG EVENTS
   // --------------------------------------------------------------------------
-  const handleTaskDragStart = (
+  function handleTaskDragStart(
     e: React.DragEvent,
     columnIndex: number,
     taskIndex: number,
     selectedTask: { colIndex: number; taskIndex: number } | null
-  ) => {
-    // Only allow dragging if the user selected this exact task
+  ) {
+    // Only allow dragging if the user actually selected this exact task
     if (
       selectedTask &&
       selectedTask.colIndex === columnIndex &&
@@ -81,18 +51,15 @@ export function useDragAndDropColumns(
     }
   }
 
-  const handleTaskDragOver = (e: React.DragEvent) => {
+  function handleTaskDragOver(e: React.DragEvent) {
     e.preventDefault()
   }
 
-  /**
-   * When a task is dropped into a new column, we update the relevant property (severityId, statusId, substatusId, or topicIds).
-   */
-  const handleTaskDrop = (
+  function handleTaskDrop(
     e: React.DragEvent,
     dropColumnIndex: number,
     dropTaskIndex: number
-  ) => {
+  ) {
     e.preventDefault()
     if (!dragItem || dragItem.type !== 'task') return
 
@@ -120,7 +87,7 @@ export function useDragAndDropColumns(
       return
     }
 
-    // If dropTaskIndex is out of range, clamp it
+    // Clamp dropTaskIndex to valid range
     if (dropTaskIndex < 0) dropTaskIndex = 0
     if (dropTaskIndex > destCol.tasks.length) {
       dropTaskIndex = destCol.tasks.length
@@ -130,17 +97,13 @@ export function useDragAndDropColumns(
 
     // If user dropped into a different column => update the relevant ID
     if (sourceColIdx !== dropColumnIndex) {
-      // e.g. if boardType="severityLevel", movedTask.severityId = destCol._id
-      // etc.
-      updateTaskField(movedTask, destCol._id)
+      updateTaskField(movedTask, destCol._id, boardType)
 
       // Also call onUpdateTask if provided
       onUpdateTask?.({
         companyId: company?._id || 'missing-company-id',
         _id: movedTask._id,
         input: {
-          // We'll pass whichever property we changed
-          // e.g. { severityId: destCol._id }
           ...buildUpdateInput(boardType, destCol._id),
         },
       })
@@ -151,10 +114,14 @@ export function useDragAndDropColumns(
   }
 
   // --------------------------------------------------------------------------
-  // HELPER to set the relevant field on the task
+  // HELPERS
   // --------------------------------------------------------------------------
-  const updateTaskField = (task: Task, newColId: string) => {
-    switch (boardType) {
+  function updateTaskField(
+    task: Task,
+    newColId: string,
+    bType: BoardType | undefined
+  ) {
+    switch (bType) {
       case 'severityLevel':
         task.severityId = newColId
         break
@@ -165,16 +132,12 @@ export function useDragAndDropColumns(
         task.substatusId = newColId
         break
       case 'topic':
-        // if it's a single topic board, you might do something like:
         task.topicIds = [newColId]
         break
     }
   }
 
-  // --------------------------------------------------------------------------
-  // HELPER to build the "input" object for onUpdateTask
-  // --------------------------------------------------------------------------
-  const buildUpdateInput = (bType: BoardType | undefined, newColId: string) => {
+  function buildUpdateInput(bType: BoardType | undefined, newColId: string) {
     switch (bType) {
       case 'severityLevel':
         return { severityId: newColId }
@@ -190,9 +153,6 @@ export function useDragAndDropColumns(
   }
 
   return {
-    handleColumnDragStart,
-    handleColumnDragOver,
-    handleColumnDrop,
     handleTaskDragStart,
     handleTaskDragOver,
     handleTaskDrop,
