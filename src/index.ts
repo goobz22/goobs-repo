@@ -82,7 +82,7 @@ import { ExtendedConfirmationCodeInputsProps } from './components/Content/Struct
 import { ExtendedRadioGroupProps } from './components/Content/Structure/radiogroup/useRadioGroup'
 import { ExtendedPhoneNumberFieldProps } from './components/Content/Structure/phoneNumber/usePhoneNumber'
 import { ExtendedProjectBoardProps } from './components/Content/Structure/projectboard/useProjectBoard'
-import { ProjectBoardProps } from './components/ProjectBoard'
+import { ProjectBoardProps } from './components/ProjectBoard/types'
 
 // Consolidated import of all DataGrid types
 import type {
