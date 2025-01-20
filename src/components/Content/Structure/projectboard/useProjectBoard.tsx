@@ -1,6 +1,7 @@
 'use client'
 import React from 'react'
-import ProjectBoard, { ProjectBoardProps } from '../../../ProjectBoard'
+import ProjectBoard from '../../../ProjectBoard'
+import { ProjectBoardProps } from '../../../ProjectBoard/types'
 import { columnconfig, cellconfig } from '../../../Grid'
 
 /**

@@ -4,7 +4,7 @@
 import React from 'react'
 import { Box } from '@mui/material'
 import ContentSection from '../../Content'
-import type { ProjectBoardProps } from '../../ProjectBoard'
+import { ProjectBoardProps } from '../../ProjectBoard/types'
 
 /**
  * Props for FormProjectBoard.
