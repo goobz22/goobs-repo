@@ -1,5 +1,3 @@
-'use server'
-
 import { RichTextEditorTypes } from '../types'
 import React from 'react'
 
