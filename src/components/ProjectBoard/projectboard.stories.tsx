@@ -2,9 +2,9 @@
 
 import { Meta, StoryObj } from '@storybook/react'
 import { userEvent, within, expect } from '@storybook/test'
-import ProjectBoard, {
+import ProjectBoard from './index'
+import {
   ProjectBoardProps,
-  Task,
   RawStatus,
   RawSubStatus,
   RawTopic,
@@ -14,7 +14,8 @@ import ProjectBoard, {
   RawEmployee,
   RawSeverityLevel,
   CompanyInfo,
-} from './index'
+  Task,
+} from './types'
 import AddTask, { AddTaskProps } from './AddTask/client'
 import ManageTask, { ManageTaskProps } from './ManageTask/client'
 import ShowTask, { ShowTaskProps } from './ShowTask/client'
