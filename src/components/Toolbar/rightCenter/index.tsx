@@ -1,0 +1,55 @@
+'use client'
+
+import React from 'react'
+import { Box, useMediaQuery } from '@mui/material'
+import ReusableSelector from '../../ReusableSelector'
+
+export interface RightCenterProps {
+  selectedRows?: string[]
+  rows?: Array<{ [key: string]: unknown }>
+  onDuplicate?: () => void
+  onDelete?: () => void
+  onManage?: () => void
+  onShow?: () => void
+  onExport?: () => void
+  handleClose?: () => void
+}
+
+function RightCenter({
+  selectedRows = [],
+  rows = [],
+  onDuplicate,
+  onDelete,
+  onManage,
+  onShow,
+  onExport,
+  handleClose,
+}: RightCenterProps) {
+  const isTabletOrBelow = useMediaQuery('(max-width:1024px)')
+
+  return (
+    <Box
+      sx={{
+        display: 'flex',
+        alignItems: 'center',
+        flexShrink: 0,
+        mt: isTabletOrBelow ? '5px' : 0,
+        height: isTabletOrBelow ? 'auto' : '100%',
+        padding: isTabletOrBelow ? '0 5px' : '0 15px',
+      }}
+    >
+      <ReusableSelector
+        selectedRows={selectedRows}
+        rows={rows}
+        onDuplicate={onDuplicate}
+        onDelete={onDelete}
+        onManage={onManage}
+        onShow={onShow}
+        onExport={onExport}
+        handleClose={handleClose}
+      />
+    </Box>
+  )
+}
+
+export default RightCenter
