@@ -5,7 +5,6 @@ import { Box, Alert } from '@mui/material'
 import CustomToolbar from '../Toolbar'
 import Table from './Table'
 import CustomFooter from './Footer'
-import ManageRow from './ManageRow'
 import { woad } from '../../styles/palette'
 import { useSearchbar } from './utils/useToolbarSearchbar'
 import { useManageRow } from './utils/useManageRow'
@@ -107,22 +106,22 @@ function DataGrid({
 
       <CustomToolbar
         buttons={buttons}
-        dropdowns={dropdowns}
+        dropdown={dropdowns?.[0]}
         searchbarProps={updatedSearchbarProps}
-        customComponent={
-          selectedRows.length > 0 ? (
-            <ManageRow
-              selectedRows={selectedRows}
-              rows={rows}
-              onDuplicate={
-                onDuplicate ? () => onDuplicate(selectedRows) : undefined
+        rightCenterProps={
+          selectedRows.length > 0
+            ? {
+                selectedRows,
+                rows,
+                onDuplicate: onDuplicate
+                  ? () => onDuplicate(selectedRows)
+                  : undefined,
+                onDelete: onDelete ? () => onDelete(selectedRows) : undefined,
+                onManage: handleManage,
+                onShow: onShow,
+                handleClose: handleManageRowClose,
               }
-              onDelete={onDelete ? () => onDelete(selectedRows) : undefined}
-              onManage={handleManage}
-              onShow={onShow}
-              handleClose={handleManageRowClose}
-            />
-          ) : null
+            : undefined
         }
       />
 
