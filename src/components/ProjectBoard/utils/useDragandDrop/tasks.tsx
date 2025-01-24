@@ -1,54 +1,34 @@
+// src/components/ProjectBoard/utils/useDragandDrop/tasks.tsx
+
 'use client'
 
 import React from 'react'
-import type {
-  ColumnData,
-  Task,
-  BoardType,
-  CompanyInfo,
-  OnUpdateTaskArgs,
-} from '../../types'
+import type { ColumnData } from '../../types'
 
-// The same DragItem shape used in columns.tsx
-type DragItem = {
-  type: 'column' | 'task'
+/** Input shape for a full cross-column move. */
+interface HandleTaskDropArgs {
+  dropColumnIndex: number
+  dropTaskIndex: number
+  allColumns: ColumnData[]
+  setAllColumns: React.Dispatch<React.SetStateAction<ColumnData[]>>
+}
+
+/** Item describing which task is being dragged. */
+interface DragInfo {
   columnIndex: number
-  taskIndex?: number
-} | null
+  taskIndex: number
+}
 
 /**
- * Hook managing task-level drag and drop.
- * Receives the same `dragItem` and `setDragItem` from useColumnDragAndDrop,
- * so both columns and tasks share the same drag state.
+ * A custom hook to manage drag-and-drop for tasks (cards).
+ * This version splices tasks out of one column and into another,
+ * updating the global array (allColumns).
  */
-export function useTaskDragAndDrop(
-  columnState: ColumnData[],
-  setColumnState: React.Dispatch<React.SetStateAction<ColumnData[]>>,
-  dragItem: DragItem,
-  setDragItem: React.Dispatch<React.SetStateAction<DragItem>>,
-  company: CompanyInfo | undefined,
-  onUpdateTask?: (args: OnUpdateTaskArgs) => void,
-  boardType?: BoardType // e.g. "severityLevel", "status", "subStatus", "topic"
-) {
-  // --------------------------------------------------------------------------
-  // TASK DRAG EVENTS
-  // --------------------------------------------------------------------------
-  function handleTaskDragStart(
-    e: React.DragEvent,
-    columnIndex: number,
-    taskIndex: number,
-    selectedTask: { colIndex: number; taskIndex: number } | null
-  ) {
-    // Only allow dragging if the user actually selected this exact task
-    if (
-      selectedTask &&
-      selectedTask.colIndex === columnIndex &&
-      selectedTask.taskIndex === taskIndex
-    ) {
-      setDragItem({ type: 'task', columnIndex, taskIndex })
-    } else {
-      e.preventDefault()
-    }
+export function useTaskDragAndDrop() {
+  const [dragItem, setDragItem] = React.useState<DragInfo | null>(null)
+
+  function handleTaskDragStart(e: React.DragEvent, item: DragInfo) {
+    setDragItem(item)
   }
 
   function handleTaskDragOver(e: React.DragEvent) {
@@ -57,102 +37,54 @@ export function useTaskDragAndDrop(
 
   function handleTaskDrop(
     e: React.DragEvent,
-    dropColumnIndex: number,
-    dropTaskIndex: number
+    {
+      dropColumnIndex,
+      dropTaskIndex,
+      allColumns,
+      setAllColumns,
+    }: HandleTaskDropArgs
   ) {
     e.preventDefault()
-    if (!dragItem || dragItem.type !== 'task') return
+    if (!dragItem) return
 
     const { columnIndex: sourceColIdx, taskIndex: sourceTaskIdx } = dragItem
-    const newCols = [...columnState]
+    if (sourceColIdx < 0 || sourceColIdx >= allColumns.length) return
 
-    // Remove from old column
-    const sourceCol = newCols[sourceColIdx]
-    if (
-      !sourceCol ||
-      sourceTaskIdx == null ||
-      sourceTaskIdx < 0 ||
-      sourceTaskIdx >= sourceCol.tasks.length
-    ) {
+    const sourceColumn = allColumns[sourceColIdx]
+    if (sourceTaskIdx < 0 || sourceTaskIdx >= sourceColumn.tasks.length) return
+
+    // The task being moved
+    const [movedTask] = sourceColumn.tasks.splice(sourceTaskIdx, 1)
+
+    // Insert into the target column
+    if (dropColumnIndex < 0 || dropColumnIndex >= allColumns.length) {
+      // If invalid drop, just put it back
+      sourceColumn.tasks.splice(sourceTaskIdx, 0, movedTask)
       setDragItem(null)
       return
     }
+    const destColumn = allColumns[dropColumnIndex]
 
-    const [movedTask] = sourceCol.tasks.splice(sourceTaskIdx, 1)
-
-    // Insert into new column
-    const destCol = newCols[dropColumnIndex]
-    if (!destCol) {
-      setDragItem(null)
-      return
-    }
-
-    // Clamp dropTaskIndex to valid range
+    // Clamp the dropTaskIndex
     if (dropTaskIndex < 0) dropTaskIndex = 0
-    if (dropTaskIndex > destCol.tasks.length) {
-      dropTaskIndex = destCol.tasks.length
+    if (dropTaskIndex > destColumn.tasks.length) {
+      dropTaskIndex = destColumn.tasks.length
     }
 
-    destCol.tasks.splice(dropTaskIndex, 0, movedTask)
+    destColumn.tasks.splice(dropTaskIndex, 0, movedTask)
 
-    // If user dropped into a different column => update the relevant ID
-    if (sourceColIdx !== dropColumnIndex) {
-      updateTaskField(movedTask, destCol._id, boardType)
+    // Update the global store
+    const newCols = [...allColumns]
+    newCols[sourceColIdx] = { ...sourceColumn }
+    newCols[dropColumnIndex] = { ...destColumn }
+    setAllColumns(newCols)
 
-      // Also call onUpdateTask if provided
-      onUpdateTask?.({
-        companyId: company?._id || 'missing-company-id',
-        _id: movedTask._id,
-        input: {
-          ...buildUpdateInput(boardType, destCol._id),
-        },
-      })
-    }
-
-    setColumnState(newCols)
     setDragItem(null)
   }
 
-  // --------------------------------------------------------------------------
-  // HELPERS
-  // --------------------------------------------------------------------------
-  function updateTaskField(
-    task: Task,
-    newColId: string,
-    bType: BoardType | undefined
-  ) {
-    switch (bType) {
-      case 'severityLevel':
-        task.severityId = newColId
-        break
-      case 'status':
-        task.statusId = newColId
-        break
-      case 'subStatus':
-        task.substatusId = newColId
-        break
-      case 'topic':
-        task.topicIds = [newColId]
-        break
-    }
-  }
-
-  function buildUpdateInput(bType: BoardType | undefined, newColId: string) {
-    switch (bType) {
-      case 'severityLevel':
-        return { severityId: newColId }
-      case 'status':
-        return { statusId: newColId }
-      case 'subStatus':
-        return { substatusId: newColId }
-      case 'topic':
-        return { topicIds: [newColId] }
-      default:
-        return {}
-    }
-  }
-
   return {
+    dragItem,
+    setDragItem,
     handleTaskDragStart,
     handleTaskDragOver,
     handleTaskDrop,

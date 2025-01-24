@@ -1,9 +1,11 @@
+// src/components/ProjectBoard/utils/useDragandDrop/columns.tsx
+
 'use client'
 
 import React from 'react'
 import type { ColumnData } from '../../types'
 
-// A small helper type for the drag info we store.
+/** A small helper type describing the item we're dragging (column or task). */
 type DragItem = {
   type: 'column' | 'task'
   columnIndex: number
@@ -11,21 +13,20 @@ type DragItem = {
 } | null
 
 /**
- * Hook managing column-level drag and drop.
- * Keeps track of what's being dragged via `dragItem` state.
+ * Hook that manages column-level drag and drop reordering.
+ * - If a user checks a column’s checkbox, we allow them to drag it left/right.
+ * - We reorder the array in state whenever they drop it on another column.
  */
 export function useColumnDragAndDrop(
   columnState: ColumnData[],
   setColumnState: React.Dispatch<React.SetStateAction<ColumnData[]>>
 ) {
-  // Tracks the item currently being dragged (could be a column or a task)
+  // Which column/task is being dragged
   const [dragItem, setDragItem] = React.useState<DragItem>(null)
 
-  /**
-   * Utility to reorder a list.
-   */
+  /** Utility to reorder columns in the array. */
   function reorder<T>(list: T[], startIndex: number, endIndex: number): T[] {
-    const result = Array.from(list)
+    const result = [...list]
     const [removed] = result.splice(startIndex, 1)
     result.splice(endIndex, 0, removed)
     return result
@@ -35,31 +36,36 @@ export function useColumnDragAndDrop(
   // COLUMN DRAG EVENTS
   // --------------------------------------------------------------------------
   function handleColumnDragStart(e: React.DragEvent, columnIndex: number) {
+    // Let the browser know we intend a "move" operation
+    e.dataTransfer.effectAllowed = 'move'
     setDragItem({ type: 'column', columnIndex })
   }
 
   function handleColumnDragOver(e: React.DragEvent) {
+    // Must prevent default so drop is allowed
     e.preventDefault()
+    // Indicate we're moving the item
+    e.dataTransfer.dropEffect = 'move'
   }
 
   function handleColumnDrop(e: React.DragEvent, dropColumnIndex: number) {
     e.preventDefault()
+
+    // If no valid dragItem or not a column, clear & return
     if (!dragItem || dragItem.type !== 'column') {
       setDragItem(null)
       return
     }
 
+    // Actually reorder columns in state
     const newCols = reorder(columnState, dragItem.columnIndex, dropColumnIndex)
     setColumnState(newCols)
+
+    // Done dragging
     setDragItem(null)
   }
 
   return {
-    // State describing what’s being dragged
-    dragItem,
-    setDragItem,
-
-    // Column handlers
     handleColumnDragStart,
     handleColumnDragOver,
     handleColumnDrop,

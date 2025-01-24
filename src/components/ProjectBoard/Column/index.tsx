@@ -1,117 +1,49 @@
+// src/components/ProjectBoard/Column/index.tsx
+
 'use client'
 
 import React, { useState, useCallback } from 'react'
 import { Box, Stack, useTheme, useMediaQuery, Checkbox } from '@mui/material'
+import { useAtom } from 'jotai'
+import { columnsAtom } from '../jotai/atom'
+
 import Typography from '../../../components/Typography'
-import { black, white } from '../../../styles/palette'
 import Card from '../../Card'
 import Dropdown from '../../Dropdown'
+import { black, white } from '../../../styles/palette'
 
-// 1) Import the types from your ProjectBoard
 import type { ColumnData, Task } from '../types'
+import { useTaskDragAndDrop } from '../utils/useDragandDrop/tasks'
 
-/** Drag item shape for our local DnD. */
 type DragItem = {
   type: 'column' | 'task'
   columnIndex: number
   taskIndex?: number
 } | null
 
-/** Helper to get a unique string ID from a task. */
 function getTaskId(task: Task): string {
   return task._id
 }
 
-/**
- * Moves a single task from one column to another (at the end).
- * @returns A new array of columns with the task moved.
- */
-function moveTaskToColumn(
-  sourceColIdx: number,
-  sourceTaskIdx: number,
-  destColIdx: number,
-  columnState: ColumnData[]
-): ColumnData[] {
-  // Make a copy of the columns
-  const newCols = [...columnState]
-
-  // Remove from old column
-  const sourceCol = newCols[sourceColIdx]
-  if (
-    !sourceCol ||
-    sourceTaskIdx < 0 ||
-    sourceTaskIdx >= sourceCol.tasks.length
-  ) {
-    return newCols // no change
-  }
-
-  const [movedTask] = sourceCol.tasks.splice(sourceTaskIdx, 1)
-
-  // Insert into new column (at end)
-  const destCol = newCols[destColIdx]
-  if (!destCol) {
-    return newCols // no change
-  }
-  destCol.tasks.push(movedTask)
-
-  return newCols
-}
-
 export interface ColumnProps {
-  /**
-   * Normally, pass an array with exactly ONE column in it—unless it's mobile.
-   * On mobile, you can pass the entire array. Then the component internally
-   * chooses a single column via a dropdown.
-   */
+  /** Usually a single column in desktop, or multiple in mobile. */
   columns: ColumnData[]
 
-  /**
-   * If we're doing the "overflow" approach, pass all overflow columns here.
-   * Then we only render whichever one the user selects in a dropdown.
-   */
+  /** If "overflow" columns exist, pass them here for the dropdown approach. */
   overflowColumns?: ColumnData[]
-
-  /** The ID of whichever overflow column is selected. */
   selectedOverflowColumnId?: string
-
-  /** Callback to pick a different overflow column in the dropdown. */
   onChangeSelectedOverflowColumn?: (colId: string) => void
 
-  /** The currently selected task (colIndex, taskIndex) if any. */
+  /** Which task is currently selected in the entire board, if any. */
   selectedTask: { colIndex: number; taskIndex: number } | null
-
-  /** Callback when the user checks/unchecks a task. */
   onSelectTask: (colIndex: number, taskIndex: number) => void
 
-  // ----- COLUMN-LEVEL DRAG
+  // Column-level DnD from ProjectBoard
   onColumnDragStart: (e: React.DragEvent, columnIndex: number) => void
   onColumnDragOver: (e: React.DragEvent, columnIndex: number) => void
   onColumnDrop: (e: React.DragEvent, columnIndex: number) => void
-
-  // ----- TASK-LEVEL DRAG from PARENT
-  handleTaskDragStart: (
-    e: React.DragEvent,
-    columnIndex: number,
-    taskIndex: number,
-    selectedTask: { colIndex: number; taskIndex: number } | null
-  ) => void
-  handleTaskDragOver: (e: React.DragEvent) => void
-  handleTaskDrop: (
-    e: React.DragEvent,
-    dropColumnIndex: number,
-    dropTaskIndex: number
-  ) => void
 }
 
-/**
- * Renders either:
- *   (1) Desktop multi‐column or single‐column layout
- *       (but here, we typically get `columns.length === 1` if the parent is controlling).
- *   (2) The "overflow column" scenario, if `overflowColumns` is set:
- *       we show a dropdown to pick which overflow column to display.
- *   (3) Mobile mode: only one column is shown, with a dropdown at the top to select
- *       which column is displayed, ignoring the overflow logic.
- */
 function Column({
   columns,
   overflowColumns,
@@ -123,110 +55,123 @@ function Column({
   onColumnDragStart,
   onColumnDragOver,
   onColumnDrop,
-
-  // Task-level handlers from the parent
-  handleTaskDragStart,
-  handleTaskDragOver,
-  handleTaskDrop,
 }: ColumnProps) {
   const theme = useTheme()
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'))
 
-  // Tracks which column is currently selected for column-level dragging (desktop only)
+  // We read/write the entire array of columns from the global store for tasks
+  const [allColumns, setAllColumns] = useAtom(columnsAtom)
+
   const [selectedColumnIndex, setSelectedColumnIndex] = useState<number | null>(
     null
   )
-
-  // For mobile layout: which column is displayed
   const [mobileColumnIndex, setMobileColumnIndex] = useState<number>(0)
 
-  // We'll store a local "dragItem"
   const [dragItem, setDragItem] = useState<DragItem>(null)
 
-  // ---------------------------------------------------------------------------
-  // 1) If this is an OVERFLOW column scenario, we need to figure out
-  //    which single ColumnData to show from the `overflowColumns` array.
-  // ---------------------------------------------------------------------------
-  const hasOverflow = Boolean(overflowColumns?.length)
-  let activeOverflowColumn: ColumnData | undefined
-  if (hasOverflow && selectedOverflowColumnId && overflowColumns) {
-    activeOverflowColumn =
-      overflowColumns.find(c => c._id === selectedOverflowColumnId) ||
-      overflowColumns[0]
+  // TASK-LEVEL DnD
+  const {
+    handleTaskDragStart: globalTaskDragStart,
+    handleTaskDragOver: globalTaskDragOver,
+    handleTaskDrop: globalTaskDrop,
+  } = useTaskDragAndDrop()
+
+  /** Wrap for local usage: pass allColumns to update cross-column moves. */
+  function handleLocalTaskDragStart(
+    e: React.DragEvent,
+    columnIndex: number,
+    taskIndex: number
+  ) {
+    if (isTaskDraggable(columnIndex, taskIndex)) {
+      globalTaskDragStart(e, { columnIndex, taskIndex })
+    } else {
+      e.preventDefault()
+    }
+  }
+  function handleLocalTaskDragOver(e: React.DragEvent) {
+    globalTaskDragOver(e)
+  }
+  function handleLocalTaskDrop(
+    e: React.DragEvent,
+    dropColumnIndex: number,
+    dropTaskIndex: number
+  ) {
+    e.preventDefault()
+    globalTaskDrop(e, {
+      dropColumnIndex,
+      dropTaskIndex,
+      allColumns,
+      setAllColumns,
+    })
+    setDragItem(null)
   }
 
-  // Column checkbox logic (desktop only)
+  // COLUMN CHECKBOX
   function handleColumnCheck(colIndex: number) {
     if (selectedColumnIndex === colIndex) {
       setSelectedColumnIndex(null)
     } else {
-      onSelectTask(-1, -1) // unselect any task
+      onSelectTask(-1, -1)
       setSelectedColumnIndex(colIndex)
     }
   }
-
-  // Update dragItem on column drag start
-  function handleLocalColumnDragStart(e: React.DragEvent, colIndex: number) {
-    setDragItem({ type: 'column', columnIndex: colIndex })
-    onColumnDragStart(e, colIndex)
+  function isColumnDraggable(colIndex: number): boolean {
+    return selectedColumnIndex === colIndex
   }
 
-  // Update dragItem on task drag start
-  function handleLocalTaskDragStart(
-    e: React.DragEvent,
-    colIndex: number,
-    taskIndex: number
-  ) {
-    if (isTaskDraggable(colIndex, taskIndex)) {
-      setDragItem({ type: 'task', columnIndex: colIndex, taskIndex })
-      handleTaskDragStart(e, colIndex, taskIndex, selectedTask)
+  function handleLocalColumnDragStart(e: React.DragEvent, colIndex: number) {
+    // Only drag if the checkbox is selected
+    if (isColumnDraggable(colIndex)) {
+      setDragItem({ type: 'column', columnIndex: colIndex })
+      onColumnDragStart(e, colIndex)
     }
   }
-
-  // If user drops on the column background => handle column reorder or cross-column move
   function handleLocalColumnDrop(e: React.DragEvent, dropColIndex: number) {
     e.preventDefault()
     if (!dragItem) return
 
     if (dragItem.type === 'column') {
-      // Let the parent's column logic reorder columns
       onColumnDrop(e, dropColIndex)
       setDragItem(null)
     } else if (dragItem.type === 'task') {
-      // If user is dropping a task on the column background, move it to the end
-      moveTaskToColumn(
-        dragItem.columnIndex,
-        dragItem.taskIndex ?? -1,
-        dropColIndex,
-        columns // passing "columns" here is normally an array with just 1 col, but
-        // your parent is actually storing the entire state for re-renders
-      )
-      // Also call the parent's handleTaskDrop so it can do final updates
-      onColumnDrop(e, dropColIndex)
-      handleTaskDrop(e, dropColIndex, columns[0].tasks.length)
-      setDragItem(null)
+      // If user drops a task onto the column background => move it to the end
+      handleLocalTaskDrop(e, dropColIndex, columns[dropColIndex].tasks.length)
     }
   }
 
-  // Called when the user changes the "overflow columns" dropdown (desktop only)
+  // TASK CHECKBOX
+  function isTaskCheckboxDisabled() {
+    return selectedColumnIndex !== null
+  }
+  function isColumnCheckboxDisabled() {
+    return selectedTask !== null
+  }
+  function isTaskDraggable(colIndex: number, taskIndex: number) {
+    if (selectedColumnIndex !== null) return false
+    return (
+      selectedTask?.colIndex === colIndex &&
+      selectedTask?.taskIndex === taskIndex
+    )
+  }
+
+  // OVERFLOW DROPDOWN
   const handleOverflowDropdownChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
+      if (!overflowColumns || !onChangeSelectedOverflowColumn) return
       const colTitle = e.target.value
-      if (overflowColumns && onChangeSelectedOverflowColumn) {
-        const found = overflowColumns.find(c => c.title === colTitle)
-        if (found) {
-          onChangeSelectedOverflowColumn(found._id)
-        }
+      const found = overflowColumns.find(c => c.title === colTitle)
+      if (found) {
+        onChangeSelectedOverflowColumn(found._id)
       }
     },
     [overflowColumns, onChangeSelectedOverflowColumn]
   )
 
-  // Column dropdown change (mobile only)
+  // MOBILE COLUMN DROPDOWN
   const handleColumnDropdownChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
-      const selectedTitle = e.target.value
-      const foundIndex = columns.findIndex(c => c.title === selectedTitle)
+      const title = e.target.value
+      const foundIndex = columns.findIndex(c => c.title === title)
       if (foundIndex >= 0) {
         setSelectedColumnIndex(null)
         onSelectTask(-1, -1)
@@ -236,38 +181,9 @@ function Column({
     [columns, onSelectTask]
   )
 
-  // Only the checked column is draggable (desktop)
-  function isColumnDraggable(colIndex: number): boolean {
-    return selectedColumnIndex === colIndex
-  }
-
-  // A helper for whether a task is draggable (desktop)
-  function isTaskDraggable(colIndex: number, taskIndex: number): boolean {
-    if (selectedColumnIndex !== null) return false
-    return (
-      selectedTask?.colIndex === colIndex &&
-      selectedTask?.taskIndex === taskIndex
-    )
-  }
-
-  // If a column is selected => tasks cannot be checked (desktop)
-  function isTaskCheckboxDisabled() {
-    return selectedColumnIndex !== null
-  }
-
-  // If a task is selected => column cannot be checked (desktop)
-  function isColumnCheckboxDisabled() {
-    return selectedTask !== null
-  }
-
-  // ===========================================================================
-  //  MOBILE VIEW
-  // ===========================================================================
-  if (isMobile) {
-    // Mobile always shows a single column with a dropdown at the top
-    // ignoring any "overflow" concept.
+  // MOBILE
+  if (isMobile && columns.length > 0) {
     const currentColumn = columns[mobileColumnIndex]
-
     return (
       <Box
         sx={{
@@ -280,9 +196,8 @@ function Column({
         <Box
           key={currentColumn._id}
           draggable={false}
-          onDragStart={() => {}}
           onDragOver={e => e.preventDefault()}
-          onDrop={() => {}}
+          onDrop={e => handleLocalColumnDrop(e, mobileColumnIndex)}
           sx={{
             boxSizing: 'border-box',
             width: { xs: '300px', sm: '300px' },
@@ -324,14 +239,13 @@ function Column({
             </Typography>
           </Box>
 
-          {/* Column Body: tasks */}
+          {/* Column Body (tasks) */}
           <Box sx={{ p: 2, flex: 1 }}>
             {!currentColumn.tasks?.length ? (
               <Typography fontcolor={white.main}>No tasks yet</Typography>
             ) : (
               <Stack spacing={1}>
                 {currentColumn.tasks.map((task, taskIndex) => {
-                  // Task checkbox *should* work on mobile
                   const isSelected =
                     selectedTask?.colIndex === mobileColumnIndex &&
                     selectedTask?.taskIndex === taskIndex
@@ -340,23 +254,29 @@ function Column({
                     <Card
                       key={getTaskId(task)}
                       variant="task"
-                      sx={{
-                        mx: '5px',
-                        width: { xs: '250px', sm: '250px' },
-                      }}
+                      sx={{ mx: '5px', width: { xs: '250px', sm: '250px' } }}
                       taskProps={{
                         title: task.title,
                         description: task.description,
                         checked: isSelected,
-                        disabled: false, // allow checking
+                        disabled: false,
                         onCheck: () => {
                           onSelectTask(mobileColumnIndex, taskIndex)
                         },
-                        // Disable drag‐and‐drop for mobile tasks
-                        draggable: false,
-                        onDragStart: () => {},
-                        onDragOver: e => e.preventDefault(),
-                        onDrop: () => {},
+                        draggable: isTaskDraggable(
+                          mobileColumnIndex,
+                          taskIndex
+                        ),
+                        onDragStart: e =>
+                          handleLocalTaskDragStart(
+                            e,
+                            mobileColumnIndex,
+                            taskIndex
+                          ),
+                        onDragOver: handleLocalTaskDragOver,
+                        onDrop: e => {
+                          handleLocalTaskDrop(e, mobileColumnIndex, taskIndex)
+                        },
                       }}
                     />
                   )
@@ -369,18 +289,22 @@ function Column({
     )
   }
 
-  // ===========================================================================
-  //  DESKTOP VIEW
-  // ===========================================================================
-  // If this is an "overflow column", we show a dropdown to pick from `overflowColumns`.
-  if (hasOverflow && activeOverflowColumn) {
+  // OVERFLOW COLUMN (desktop)
+  const hasOverflow = Boolean(overflowColumns?.length)
+  let activeOverflowColumn: ColumnData | undefined
+  if (!isMobile && hasOverflow && selectedOverflowColumnId && overflowColumns) {
+    activeOverflowColumn =
+      overflowColumns.find(c => c._id === selectedOverflowColumnId) ||
+      overflowColumns[0]
+  }
+
+  if (!isMobile && hasOverflow && activeOverflowColumn) {
     return (
       <Box
         key="overflow-desktop-column"
         draggable={false}
-        onDragStart={() => {}}
         onDragOver={e => e.preventDefault()}
-        onDrop={e => handleLocalColumnDrop(e, 0)} // "0" is somewhat arbitrary here
+        onDrop={e => handleLocalColumnDrop(e, 0)}
         sx={{
           boxSizing: 'border-box',
           width: '300px',
@@ -394,7 +318,6 @@ function Column({
           position: 'relative',
         }}
       >
-        {/* Overflow Column Head */}
         <Box
           sx={{
             borderBottom: `1px solid ${white.main}`,
@@ -402,14 +325,10 @@ function Column({
             position: 'relative',
           }}
         >
-          {/* No column-level "select" checkbox here, but you could add if needed */}
-          {/* Overflow dropdown in top-right */}
           <Dropdown
             label="More Columns"
-            options={overflowColumns!.map(col => ({
-              value: col.title,
-            }))}
-            value={activeOverflowColumn.title}
+            options={overflowColumns?.map(col => ({ value: col.title })) ?? []}
+            value={activeOverflowColumn?.title}
             onChange={handleOverflowDropdownChange}
             name="overflowColumnSelect"
             fontcolor="#000"
@@ -428,15 +347,12 @@ function Column({
           </Stack>
         </Box>
 
-        {/* Overflow Column Body: tasks */}
         <Box sx={{ p: 2, flex: 1 }}>
           {!activeOverflowColumn.tasks?.length ? (
             <Typography fontcolor={white.main}>No tasks yet</Typography>
           ) : (
             <Stack spacing={1}>
               {activeOverflowColumn.tasks.map((task, taskIndex) => {
-                // Because we only have one "column" here, let's treat colIndex as 0
-                // If you want to track real indexes, you'd have to store them externally.
                 const isSelected =
                   selectedTask?.colIndex === 0 &&
                   selectedTask?.taskIndex === taskIndex
@@ -445,10 +361,7 @@ function Column({
                   <Card
                     key={getTaskId(task)}
                     variant="task"
-                    sx={{
-                      mx: '5px',
-                      width: { xs: '250px', sm: '250px' },
-                    }}
+                    sx={{ mx: '5px', width: { xs: '250px', sm: '250px' } }}
                     taskProps={{
                       title: task.title,
                       description: task.description,
@@ -457,10 +370,11 @@ function Column({
                       onCheck: () => {
                         onSelectTask(0, taskIndex)
                       },
-                      draggable: false, // or true if you want to allow DnD
-                      onDragStart: () => {},
-                      onDragOver: e => e.preventDefault(),
-                      onDrop: () => {},
+                      draggable: isTaskDraggable(0, taskIndex),
+                      onDragStart: e =>
+                        handleLocalTaskDragStart(e, 0, taskIndex),
+                      onDragOver: handleLocalTaskDragOver,
+                      onDrop: e => handleLocalTaskDrop(e, 0, taskIndex),
                     }}
                   />
                 )
@@ -472,8 +386,7 @@ function Column({
     )
   }
 
-  // Normal (non‐overflow) desktop columns scenario:
-  // Usually, the parent only passes `[oneColumn]` in `columns`, so we just render that single column box.
+  // NORMAL DESKTOP COLUMNS
   return (
     <Stack direction="row" spacing={3}>
       {columns.map((col, colIndex) => {
@@ -483,11 +396,7 @@ function Column({
           <Box
             key={col._id}
             draggable={isColumnDraggable(colIndex)}
-            onDragStart={e => {
-              if (isColumnDraggable(colIndex)) {
-                handleLocalColumnDragStart(e, colIndex)
-              }
-            }}
+            onDragStart={e => handleLocalColumnDragStart(e, colIndex)}
             onDragOver={e => {
               e.preventDefault()
               onColumnDragOver(e, colIndex)
@@ -506,7 +415,7 @@ function Column({
               position: 'relative',
             }}
           >
-            {/* Column Head */}
+            {/* Column Header */}
             <Box
               sx={{
                 borderBottom: `1px solid ${white.main}`,
@@ -564,20 +473,16 @@ function Column({
                           checked: isSelected,
                           disabled: isTaskCheckboxDisabled(),
                           onCheck: () => {
-                            // If a column is selected, ignore
                             if (selectedColumnIndex !== null) return
                             onSelectTask(colIndex, taskIndex)
                           },
 
                           draggable: isTaskDraggable(colIndex, taskIndex),
                           onDragStart: e =>
-                            isTaskDraggable(colIndex, taskIndex) &&
                             handleLocalTaskDragStart(e, colIndex, taskIndex),
-                          onDragOver: handleTaskDragOver,
-                          onDrop: e => {
-                            e.preventDefault()
-                            handleTaskDrop(e, colIndex, taskIndex)
-                          },
+                          onDragOver: handleLocalTaskDragOver,
+                          onDrop: e =>
+                            handleLocalTaskDrop(e, colIndex, taskIndex),
                         }}
                       />
                     )
