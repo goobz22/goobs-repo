@@ -1,22 +1,15 @@
 'use client'
 
 import React, { useMemo, useState } from 'react'
-import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Box,
-} from '@mui/material'
+import Popup from '../../Form/Popup' // <-- Import your Popup or PopupForm
+import { ContentSectionProps } from '../../Content'
+import { TransferListDropdownDataMap } from '../../TransferList'
 
-import Dropdown from '../../Dropdown'
-import TextField from '../../TextField'
-import DateField from '../../DateField'
-import TransferList, { TransferListDropdownDataMap } from '../../TransferList'
-import CustomButton from '../../Button'
-
-// Example raw data types (replace with your real data):
+// Import the relevant types from your shared `types.ts`
 import type {
+  // If you have an "Administrator" interface there, you can import that too
+  RawAdministrator,
+  CompanyInfo,
   RawSeverityLevel,
   RawStatus,
   RawSubStatus,
@@ -26,22 +19,10 @@ import type {
   RawEmployee,
 } from '../types'
 
-// If you have real company or admin types, adapt them:
-interface CompanyAccount {
-  _id: string
-  companyName: string
-}
-interface Administrator {
-  _id: string
-  fullName: string
-}
+/** If you declared an "Administrator" interface in your types, import it too: */
+// import type { Administrator } from '../types'
 
-/**
- * Our 3 variants:
- *  - "company"
- *  - "customer"
- *  - "administrator"
- */
+// Our 3 variants: 'company', 'customer', 'administrator'
 export type ManageTaskVariant = 'company' | 'customer' | 'administrator'
 
 export interface ManageTaskProps {
@@ -49,14 +30,15 @@ export interface ManageTaskProps {
   onClose: () => void
   variant: ManageTaskVariant
 
-  // For "company" variant
-  companyAccounts?: CompanyAccount[]
-  administrators?: Administrator[]
+  // For "company" variant:
+  companyAccounts?: CompanyInfo[]
+  /** administrators can be an array of RawAdministrator or your full Administrator type */
+  administrators?: RawAdministrator[] /* | Administrator[] */
 
   // For "customer" variant => assignedEmployee
   employees?: RawEmployee[]
 
-  // Common data
+  // Common data (shared across all variants):
   statuses: RawStatus[]
   subStatuses: RawSubStatus[]
   schedulingQueues: RawQueue[]
@@ -71,7 +53,10 @@ export interface ManageTaskProps {
   defaultTaskDescription?: string
   defaultNextActionDate?: Date | null
 
-  /** Called on "Save." We pass back form fields + TransferList data. */
+  /**
+   * Called on "Save." We pass back form fields + TransferList data.
+   * If variant='company' or 'administrator', includes transferListData.
+   */
   onSubmit?: (data: {
     taskTitle: string
     taskDescription: string
@@ -80,11 +65,16 @@ export interface ManageTaskProps {
   }) => void
 }
 
+function isDefinedDropdown<T>(val: T | false | null | undefined): val is T {
+  return Boolean(val)
+}
+
 const ManageTask: React.FC<ManageTaskProps> = ({
   open,
   onClose,
   variant,
 
+  // Defaults so we don't crash if these arrays are omitted
   companyAccounts = [],
   administrators = [],
   employees = [],
@@ -104,7 +94,7 @@ const ManageTask: React.FC<ManageTaskProps> = ({
   onSubmit,
 }) => {
   // -------------------------------------------------------------------------
-  // Local state for each dropdown input
+  // Local state for dropdowns
   // -------------------------------------------------------------------------
   const [selectedCompany, setSelectedCompany] = useState('')
   const [selectedCustomer, setSelectedCustomer] = useState('')
@@ -125,6 +115,7 @@ const ManageTask: React.FC<ManageTaskProps> = ({
   // -------------------------------------------------------------------------
   // TransferList only if variant="company" or "administrator"
   // -------------------------------------------------------------------------
+  // Convert articles/topics to displayable strings
   const articleTitles = useMemo(
     () => knowledgebaseArticles.map(a => a.articleTitle || `Article#${a._id}`),
     [knowledgebaseArticles]
@@ -134,7 +125,7 @@ const ManageTask: React.FC<ManageTaskProps> = ({
     [topics]
   )
 
-  // We'll create a data map with "knowledgebase" & "topics" categories
+  // The TransferListDropdownDataMap for "knowledgebase" & "topics"
   const [transferListDataMap, setTransferListDataMap] =
     useState<TransferListDropdownDataMap>({
       knowledgebase: {
@@ -153,6 +144,7 @@ const ManageTask: React.FC<ManageTaskProps> = ({
     []
   )
 
+  // TransferList change handler
   const handleTransferListChange = (
     newLeft: string[],
     newRight: string[],
@@ -169,14 +161,14 @@ const ManageTask: React.FC<ManageTaskProps> = ({
   }
 
   // -------------------------------------------------------------------------
-  // Submit
+  // On "Save" => gather all data
   // -------------------------------------------------------------------------
   const handleSave = () => {
     const formData = {
       taskTitle,
       taskDescription,
       nextActionDate,
-      // Only pass transferList data for "company" or "administrator"
+      // Only pass transferListData for "company"/"administrator"
       transferListData:
         variant === 'company' || variant === 'administrator'
           ? transferListDataMap
@@ -186,231 +178,262 @@ const ManageTask: React.FC<ManageTaskProps> = ({
   }
 
   // -------------------------------------------------------------------------
-  // Render
+  // Build ContentSection grids for <Popup> (similar pattern to AddTask)
+  // -------------------------------------------------------------------------
+
+  // 1) Main grid: all inputs (dropdowns, textfields, datefield, transferlist, etc.)
+  const mainGrid: ContentSectionProps['grids'][0] = {
+    grid: {
+      gridconfig: {
+        gridwidth: '100%',
+      },
+    },
+    dropdown: (
+      [
+        // ----- COMPANY variant: Company + Administrator + Severity + Queue + Status + Substatus -----
+        variant === 'company' && {
+          label: 'Company Account',
+          name: 'companyAccount',
+          options: companyAccounts.map(acc => ({ value: acc.companyName })),
+          value: selectedCompany,
+          onChange: e => setSelectedCompany(e.target.value),
+          columnconfig: { row: 1, column: 1, columnwidth: '50%' },
+        },
+        variant === 'company' && {
+          label: 'Assigned Administrator',
+          name: 'assignedAdministrator',
+          // We handle either RawAdministrator or an Administrator w/ "fullName"
+          options: administrators.map(a => {
+            // If you have "fullName" guaranteed, use it; else build from firstName/lastName
+            const name =
+              'fullName' in a && a.fullName
+                ? a.fullName
+                : `${a.firstName ?? ''} ${a.lastName ?? ''}`.trim() || 'Unknown'
+            return { value: name }
+          }),
+          value: selectedAdministrator,
+          onChange: e => setSelectedAdministrator(e.target.value),
+          columnconfig: { row: 1, column: 2, columnwidth: '50%' },
+        },
+        variant === 'company' && {
+          label: 'Severity Level',
+          name: 'severityLevel',
+          options: severityLevels.map(s => ({
+            value: String(s.severityLevel),
+          })),
+          value: selectedSeverity,
+          onChange: e => setSelectedSeverity(e.target.value),
+          columnconfig: { row: 2, column: 1, columnwidth: '50%' },
+        },
+        variant === 'company' && {
+          label: 'Associated Product (Queue)',
+          name: 'associatedQueue',
+          options: schedulingQueues.map(q => ({ value: q.queueName })),
+          value: selectedQueue,
+          onChange: e => setSelectedQueue(e.target.value),
+          columnconfig: { row: 2, column: 2, columnwidth: '50%' },
+        },
+        variant === 'company' && {
+          label: 'Status',
+          name: 'status',
+          options: statuses.map(s => ({ value: s.status })),
+          value: selectedStatus,
+          onChange: e => setSelectedStatus(e.target.value),
+          columnconfig: { row: 3, column: 1, columnwidth: '50%' },
+        },
+        variant === 'company' && {
+          label: 'Substatus',
+          name: 'substatus',
+          options: subStatuses.map(s => ({ value: s.subStatus })),
+          value: selectedSubStatus,
+          onChange: e => setSelectedSubStatus(e.target.value),
+          columnconfig: { row: 3, column: 2, columnwidth: '50%' },
+        },
+
+        // ----- CUSTOMER variant: Customer + Employee + Severity + Queue + Status + Substatus -----
+        variant === 'customer' && {
+          label: 'Customer Account',
+          name: 'customerAccount',
+          options: [{ value: 'SampleCustomerAccount' }], // or real data
+          value: selectedCustomer,
+          onChange: e => setSelectedCustomer(e.target.value),
+          columnconfig: { row: 1, column: 1, columnwidth: '50%' },
+        },
+        variant === 'customer' && {
+          label: 'Assigned Employee',
+          name: 'assignedEmployee',
+          options: employees.map(emp => ({
+            value: `${emp.firstName ?? ''} ${emp.lastName ?? ''}`.trim(),
+          })),
+          value: selectedEmployee,
+          onChange: e => setSelectedEmployee(e.target.value),
+          columnconfig: { row: 1, column: 2, columnwidth: '50%' },
+        },
+        variant === 'customer' && {
+          label: 'Severity Level',
+          name: 'severityLevel',
+          options: severityLevels.map(s => ({
+            value: String(s.severityLevel),
+          })),
+          value: selectedSeverity,
+          onChange: e => setSelectedSeverity(e.target.value),
+          columnconfig: { row: 2, column: 1, columnwidth: '50%' },
+        },
+        variant === 'customer' && {
+          label: 'Associated Product (Queue)',
+          name: 'associatedQueue',
+          options: schedulingQueues.map(q => ({ value: q.queueName })),
+          value: selectedQueue,
+          onChange: e => setSelectedQueue(e.target.value),
+          columnconfig: { row: 2, column: 2, columnwidth: '50%' },
+        },
+        variant === 'customer' && {
+          label: 'Status',
+          name: 'status',
+          options: statuses.map(s => ({ value: s.status })),
+          value: selectedStatus,
+          onChange: e => setSelectedStatus(e.target.value),
+          columnconfig: { row: 3, column: 1, columnwidth: '50%' },
+        },
+        variant === 'customer' && {
+          label: 'Substatus',
+          name: 'substatus',
+          options: subStatuses.map(s => ({ value: s.subStatus })),
+          value: selectedSubStatus,
+          onChange: e => setSelectedSubStatus(e.target.value),
+          columnconfig: { row: 3, column: 2, columnwidth: '50%' },
+        },
+
+        // ----- ADMINISTRATOR variant: Severity + Queue + Status + Substatus -----
+        variant === 'administrator' && {
+          label: 'Severity Level',
+          name: 'severityLevel',
+          options: severityLevels.map(s => ({
+            value: String(s.severityLevel),
+          })),
+          value: selectedSeverity,
+          onChange: e => setSelectedSeverity(e.target.value),
+          columnconfig: { row: 1, column: 1, columnwidth: '50%' },
+        },
+        variant === 'administrator' && {
+          label: 'Associated Product (Queue)',
+          name: 'associatedQueue',
+          options: schedulingQueues.map(q => ({ value: q.queueName })),
+          value: selectedQueue,
+          onChange: e => setSelectedQueue(e.target.value),
+          columnconfig: { row: 1, column: 2, columnwidth: '50%' },
+        },
+        variant === 'administrator' && {
+          label: 'Status',
+          name: 'status',
+          options: statuses.map(s => ({ value: s.status })),
+          value: selectedStatus,
+          onChange: e => setSelectedStatus(e.target.value),
+          columnconfig: { row: 2, column: 1, columnwidth: '50%' },
+        },
+        variant === 'administrator' && {
+          label: 'Substatus',
+          name: 'substatus',
+          options: subStatuses.map(s => ({ value: s.subStatus })),
+          value: selectedSubStatus,
+          onChange: e => setSelectedSubStatus(e.target.value),
+          columnconfig: { row: 2, column: 2, columnwidth: '50%' },
+        },
+      ] as (
+        | false
+        | {
+            label: string
+            name: string
+            options: { value: string }[]
+            value: string
+            onChange: (e: React.ChangeEvent<HTMLInputElement>) => void
+            columnconfig: { row: number; column: number; columnwidth: string }
+          }
+      )[]
+    ).filter(isDefinedDropdown),
+
+    // Show multi-category TransferList only for 'company' or 'administrator'
+    transferlist:
+      variant === 'company' || variant === 'administrator'
+        ? [
+            {
+              // We assume your ContentSection can handle these advanced props
+              variant: 'multipleSelection', // if your TransferList supports it
+              dropdownLabel: 'Topics or Articles',
+              dropdownOptions: multiSelectOptions,
+              dropdownDataMap: transferListDataMap,
+              leftTitle: 'Unassigned',
+              rightTitle: 'Assigned',
+              onChange: handleTransferListChange,
+              columnconfig: { row: 4, column: 1, columnwidth: '100%' },
+            },
+          ]
+        : undefined,
+
+    textfield: [
+      {
+        label: 'Task Title',
+        value: taskTitle,
+        onChange: (e: React.ChangeEvent<HTMLInputElement>) =>
+          setTaskTitle(e.target.value),
+        columnconfig: { row: 5, column: 1, columnwidth: '100%' },
+      },
+      {
+        label: 'Task Description',
+        value: taskDescription,
+        multiline: true,
+        minRows: 5,
+        onChange: (e: React.ChangeEvent<HTMLInputElement>) =>
+          setTaskDescription(e.target.value),
+        columnconfig: { row: 6, column: 1, columnwidth: '100%' },
+      },
+    ],
+
+    datefield: [
+      {
+        label: 'Next Action Date',
+        value: nextActionDate,
+        onChange: (date: Date | null) => setNextActionDate(date),
+        columnconfig: { row: 7, column: 1, columnwidth: '50%' },
+      },
+    ],
+  }
+
+  // 2) Buttons grid
+  const buttonGrid: ContentSectionProps['grids'][0] = {
+    grid: {
+      gridconfig: {
+        alignment: 'right',
+      },
+    },
+    button: [
+      {
+        text: 'Cancel',
+        backgroundcolor: 'none',
+        fontcolor: 'black',
+        onClick: onClose, // Just call parent to toggle open=false
+        columnconfig: { row: 1, column: 1 },
+      },
+      {
+        text: 'Save',
+        backgroundcolor: '#1976d2',
+        fontcolor: 'white',
+        onClick: handleSave,
+        columnconfig: { row: 1, column: 2 },
+      },
+    ],
+  }
+
+  // -------------------------------------------------------------------------
+  // Render using <Popup> just like <AddTask> does
   // -------------------------------------------------------------------------
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
-      <DialogTitle>Manage Task</DialogTitle>
-
-      <DialogContent>
-        <Box
-          sx={{
-            display: 'grid',
-            gridTemplateColumns: '1fr 1fr',
-            gap: 2,
-            mb: 2,
-          }}
-        >
-          {/* ============ "COMPANY" VARIANT ============ */}
-          {variant === 'company' && (
-            <>
-              <Dropdown
-                label="Company Account"
-                name="companyAccount"
-                options={companyAccounts.map(acc => ({
-                  value: acc.companyName,
-                }))}
-                value={selectedCompany}
-                onChange={e => setSelectedCompany(e.target.value)}
-              />
-
-              <Dropdown
-                label="Severity Level"
-                name="severityLevel"
-                options={severityLevels.map(s => ({
-                  value: String(s.severityLevel),
-                }))}
-                value={selectedSeverity}
-                onChange={e => setSelectedSeverity(e.target.value)}
-              />
-
-              <Dropdown
-                label="Associated Product (Queue)"
-                name="associatedQueue"
-                options={schedulingQueues.map(q => ({ value: q.queueName }))}
-                value={selectedQueue}
-                onChange={e => setSelectedQueue(e.target.value)}
-              />
-
-              <Dropdown
-                label="Assigned Administrator"
-                name="assignedAdministrator"
-                options={administrators.map(a => ({ value: a.fullName }))}
-                value={selectedAdministrator}
-                onChange={e => setSelectedAdministrator(e.target.value)}
-              />
-
-              <Dropdown
-                label="Status"
-                name="status"
-                options={statuses.map(s => ({ value: s.status }))}
-                value={selectedStatus}
-                onChange={e => setSelectedStatus(e.target.value)}
-              />
-
-              <Dropdown
-                label="Substatus"
-                name="substatus"
-                options={subStatuses.map(s => ({ value: s.subStatus }))}
-                value={selectedSubStatus}
-                onChange={e => setSelectedSubStatus(e.target.value)}
-              />
-            </>
-          )}
-
-          {/* ============ "CUSTOMER" VARIANT ============ */}
-          {variant === 'customer' && (
-            <>
-              <Dropdown
-                label="Customer Account"
-                name="customerAccount"
-                options={[{ value: 'SampleCustomerAccount' }]}
-                value={selectedCustomer}
-                onChange={e => setSelectedCustomer(e.target.value)}
-              />
-
-              <Dropdown
-                label="Severity Level"
-                name="severityLevel"
-                options={severityLevels.map(s => ({
-                  value: String(s.severityLevel),
-                }))}
-                value={selectedSeverity}
-                onChange={e => setSelectedSeverity(e.target.value)}
-              />
-
-              <Dropdown
-                label="Associated Product (Queue)"
-                name="associatedQueue"
-                options={schedulingQueues.map(q => ({ value: q.queueName }))}
-                value={selectedQueue}
-                onChange={e => setSelectedQueue(e.target.value)}
-              />
-
-              <Dropdown
-                label="Assigned Employee"
-                name="assignedEmployee"
-                options={employees.map(emp => ({
-                  value: `${emp.firstName ?? ''} ${emp.lastName ?? ''}`,
-                }))}
-                value={selectedEmployee}
-                onChange={e => setSelectedEmployee(e.target.value)}
-              />
-
-              <Dropdown
-                label="Status"
-                name="status"
-                options={statuses.map(s => ({ value: s.status }))}
-                value={selectedStatus}
-                onChange={e => setSelectedStatus(e.target.value)}
-              />
-
-              <Dropdown
-                label="Substatus"
-                name="substatus"
-                options={subStatuses.map(s => ({ value: s.subStatus }))}
-                value={selectedSubStatus}
-                onChange={e => setSelectedSubStatus(e.target.value)}
-              />
-            </>
-          )}
-
-          {/* ============ "ADMINISTRATOR" VARIANT ============ */}
-          {variant === 'administrator' && (
-            <>
-              <Dropdown
-                label="Severity Level"
-                name="severityLevel"
-                options={severityLevels.map(s => ({
-                  value: String(s.severityLevel),
-                }))}
-                value={selectedSeverity}
-                onChange={e => setSelectedSeverity(e.target.value)}
-              />
-
-              <Dropdown
-                label="Associated Product (Queue)"
-                name="associatedQueue"
-                options={schedulingQueues.map(q => ({ value: q.queueName }))}
-                value={selectedQueue}
-                onChange={e => setSelectedQueue(e.target.value)}
-              />
-
-              <Dropdown
-                label="Status"
-                name="status"
-                options={statuses.map(s => ({ value: s.status }))}
-                value={selectedStatus}
-                onChange={e => setSelectedStatus(e.target.value)}
-              />
-
-              <Dropdown
-                label="Substatus"
-                name="substatus"
-                options={subStatuses.map(s => ({ value: s.subStatus }))}
-                value={selectedSubStatus}
-                onChange={e => setSelectedSubStatus(e.target.value)}
-              />
-            </>
-          )}
-        </Box>
-
-        {/* Only "company" and "administrator" get multi-selection TransferList */}
-        {(variant === 'company' || variant === 'administrator') && (
-          <Box sx={{ mb: 2 }}>
-            <TransferList
-              variant="multipleSelection"
-              dropdownLabel="Topics or Articles"
-              dropdownOptions={multiSelectOptions}
-              dropdownDataMap={transferListDataMap}
-              leftTitle="Unassigned"
-              rightTitle="Assigned"
-              onChange={handleTransferListChange}
-            />
-          </Box>
-        )}
-
-        {/* Task Title / Description */}
-        <TextField
-          label="Task Title"
-          value={taskTitle}
-          onChange={e => setTaskTitle(e.target.value)}
-        />
-        <Box sx={{ mt: 2 }}>
-          <TextField
-            label="Task Description"
-            value={taskDescription}
-            multiline
-            minRows={5}
-            onChange={e => setTaskDescription(e.target.value)}
-          />
-        </Box>
-
-        {/* Next Action Date */}
-        <Box sx={{ mt: 2, width: '50%' }}>
-          <DateField
-            label="Next Action Date"
-            value={nextActionDate}
-            onChange={date => setNextActionDate(date)}
-          />
-        </Box>
-      </DialogContent>
-
-      <DialogActions sx={{ gap: 1 }}>
-        <CustomButton
-          text="Cancel"
-          backgroundcolor="none"
-          fontcolor="black"
-          onClick={onClose}
-        />
-        <CustomButton
-          text="Save"
-          backgroundcolor="#1976d2"
-          fontcolor="white"
-          onClick={handleSave}
-        />
-      </DialogActions>
-    </Dialog>
+    <Popup
+      open={open}
+      title="Manage Task"
+      width={700}
+      grids={[mainGrid, buttonGrid]}
+    />
   )
 }
 

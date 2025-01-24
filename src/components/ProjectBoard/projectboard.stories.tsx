@@ -16,8 +16,11 @@ import {
   CompanyInfo,
   Task,
 } from './types'
-import AddTask, { AddTaskProps } from './AddTask/client'
-import ManageTask, { ManageTaskProps } from './ManageTask/client'
+import AddTask, { AddTaskProps, AddTaskVariant } from './AddTask/client'
+import ManageTask, {
+  ManageTaskProps,
+  ManageTaskVariant,
+} from './ManageTask/client'
 import ShowTask, { ShowTaskProps } from './ShowTask/client'
 
 /**
@@ -37,9 +40,10 @@ export default meta
 
 type Story = StoryObj<typeof ProjectBoard>
 
-/**
- * Sample "raw" data arrays to pass into ProjectBoard or popups.
- */
+/* --------------------------------------------------------------------------
+   SAMPLE DATA FOR PROJECTBOARD + POPUPS
+-------------------------------------------------------------------------- */
+
 const sampleStatuses: RawStatus[] = [
   { _id: 'stat-1', status: 'Open', description: 'Open tasks' },
   { _id: 'stat-2', status: 'Closed', description: 'Closed tasks' },
@@ -131,8 +135,12 @@ const sampleTopicColumns = [
   { _id: 'topic-2', title: 'Backend', description: 'Server tasks' },
 ]
 
+/* --------------------------------------------------------------------------
+   1) PROJECT BOARD STORIES
+-------------------------------------------------------------------------- */
+
 /**
- * 1) Basic "status" board
+ * Board #1: Status-based
  */
 export const BasicStatusBoard: Story = {
   name: 'Basic Board (Status-based)',
@@ -166,8 +174,7 @@ export const BasicStatusBoard: Story = {
 }
 
 /**
- * 2) Severity-based board
- *    No user interactions => remove `async`.
+ * Board #2: Severity-based
  */
 export const SeverityBoard: Story = {
   name: 'Severity Board',
@@ -194,15 +201,13 @@ export const SeverityBoard: Story = {
   } as ProjectBoardProps,
   play: ({ canvasElement }) => {
     const canvas = within(canvasElement)
-    // Check for columns "Low" / "High"
     expect(canvas.getByText('Low')).toBeInTheDocument()
     expect(canvas.getByText('High')).toBeInTheDocument()
   },
 }
 
 /**
- * 3) SubStatus-based board
- *    No user interactions => no `play` needed.
+ * Board #3: SubStatus-based
  */
 export const SubStatusBoard: Story = {
   name: 'SubStatus Board',
@@ -224,8 +229,7 @@ export const SubStatusBoard: Story = {
 }
 
 /**
- * 4) Topic-based board
- *    No user interactions => no `play` needed.
+ * Board #4: Topic-based
  */
 export const TopicBoard: Story = {
   name: 'Topic Board',
@@ -247,97 +251,130 @@ export const TopicBoard: Story = {
 }
 
 /* --------------------------------------------------------------------------
-   POPUP COMPONENT STORIES
-   We'll pass in minimal props to demonstrate usage. 
-   We override `render` to show each popup alone (AddTask, ManageTask, ShowTask).
-------------------------------------------------------------------------- */
+   2) ADDTASK POPUP STORIES (3 variants)
+-------------------------------------------------------------------------- */
 
-/**
- * 5) AddTask (standalone)
- *    We do use user interactions => keep async.
- */
-export const AddTaskPopup: StoryObj = {
-  name: 'AddTask Popup (Standalone)',
-  render: () => {
-    const props: AddTaskProps = {
-      open: true,
-      onClose: () => console.log('AddTask onClose'),
-      onSubmit: newTask => {
-        console.log('AddTask onSubmit => newTask:', newTask)
-      },
-      variant: 'company', // or "customer" / "administrator"
-      statuses: sampleStatuses,
-      subStatuses: sampleSubStatuses,
-      topics: sampleTopics,
-      schedulingQueues: sampleQueues,
-      knowledgebaseArticles: sampleArticles,
-      customers: sampleCustomers,
-      employees: sampleEmployees,
-      severityLevels: sampleSeverityLevels,
-    }
-    return <AddTask {...props} />
-  },
-  play: async ({ canvasElement }) => {
-    const canvas = within(canvasElement)
-    // Check the presence of the "Submit" button
-    expect(canvas.getByRole('button', { name: /Submit/i })).toBeInTheDocument()
-    // Type a task title
-    const titleField = canvas.getByLabelText('Task Title')
-    await userEvent.type(titleField, 'My New Task')
-    expect(titleField).toHaveValue('My New Task')
-  },
+/** Base function to create an AddTask story with the given variant. */
+function makeAddTaskStory(
+  variant: AddTaskVariant,
+  storyName: string
+): StoryObj {
+  return {
+    name: storyName,
+    render: () => {
+      const props: AddTaskProps = {
+        open: true,
+        onClose: () => console.log('AddTask onClose'),
+        onSubmit: newTask => {
+          console.log(`[AddTask ${variant}] onSubmit => `, newTask)
+        },
+        variant,
+        statuses: sampleStatuses,
+        subStatuses: sampleSubStatuses,
+        topics: sampleTopics,
+        schedulingQueues: sampleQueues,
+        knowledgebaseArticles: sampleArticles,
+        customers: sampleCustomers,
+        employees: sampleEmployees,
+        severityLevels: sampleSeverityLevels,
+      }
+      return <AddTask {...props} />
+    },
+    play: async ({ canvasElement }) => {
+      const canvas = within(canvasElement)
+      // Just ensure the "Create Task" button is present
+      const createBtn = canvas.getByRole('button', { name: /Create Task/i })
+      expect(createBtn).toBeInTheDocument()
+      // Type something into "Task Title"
+      const titleField = canvas.getByLabelText(/Task Title/i)
+      await userEvent.type(titleField, `My ${variant} Task`)
+      expect(titleField).toHaveValue(`My ${variant} Task`)
+    },
+  }
 }
 
-/**
- * 6) ManageTask (standalone)
- *    We do user interactions => keep async.
- */
-export const ManageTaskPopup: StoryObj = {
-  name: 'ManageTask Popup (Standalone)',
-  render: () => {
-    const props: ManageTaskProps = {
-      open: true,
-      onClose: () => console.log('ManageTask onClose'),
-      variant: 'customer', // or "company"/"administrator"
-      // "company" or "administrator" might expect certain props:
-      companyAccounts: [{ _id: 'co-123', companyName: 'Acme Inc.' }],
-      administrators: [{ _id: 'adm-1', fullName: 'Jane Admin' }],
+export const AddTaskPopup_Customer = makeAddTaskStory(
+  'customer',
+  'AddTask Popup - Customer Variant'
+)
+export const AddTaskPopup_Company = makeAddTaskStory(
+  'company',
+  'AddTask Popup - Company Variant'
+)
+export const AddTaskPopup_Administrator = makeAddTaskStory(
+  'administrator',
+  'AddTask Popup - Administrator Variant'
+)
 
-      employees: sampleEmployees,
+/* --------------------------------------------------------------------------
+   3) MANAGETASK POPUP STORIES (3 variants)
+-------------------------------------------------------------------------- */
 
-      statuses: sampleStatuses,
-      subStatuses: sampleSubStatuses,
-      schedulingQueues: sampleQueues,
-      severityLevels: sampleSeverityLevels,
-      topics: sampleTopics,
-      knowledgebaseArticles: sampleArticles,
+/** Base function to create a ManageTask story with the given variant. */
+function makeManageTaskStory(
+  variant: ManageTaskVariant,
+  storyName: string
+): StoryObj {
+  return {
+    name: storyName,
+    render: () => {
+      const props: ManageTaskProps = {
+        open: true,
+        onClose: () => console.log(`[ManageTask ${variant}] onClose`),
+        variant,
+        // If variant='company' or 'administrator', pass these:
+        companyAccounts: [{ _id: 'co-123', companyName: 'Acme Inc.' }],
+        administrators: [{ _id: 'adm-1', fullName: 'Jane Admin' }],
 
-      defaultTaskTitle: 'Existing Task Title',
-      defaultTaskDescription: 'Existing Description',
-      defaultNextActionDate: null,
+        employees: sampleEmployees,
+        statuses: sampleStatuses,
+        subStatuses: sampleSubStatuses,
+        schedulingQueues: sampleQueues,
+        severityLevels: sampleSeverityLevels,
+        topics: sampleTopics,
+        knowledgebaseArticles: sampleArticles,
 
-      onSubmit: data => {
-        console.log('ManageTask onSubmit => form data:', data)
-      },
-    }
-    return <ManageTask {...props} />
-  },
-  play: async ({ canvasElement }) => {
-    const canvas = within(canvasElement)
-    // Confirm "Existing Task Title" in the Title field
-    const titleField = canvas.getByLabelText('Task Title')
-    expect(titleField).toHaveValue('Existing Task Title')
+        defaultTaskTitle: `Existing Title [${variant}]`,
+        defaultTaskDescription: `Existing Desc [${variant}]`,
+        defaultNextActionDate: null,
 
-    // Check "Save" button
-    const saveBtn = canvas.getByRole('button', { name: /Save/i })
-    await userEvent.click(saveBtn)
-  },
+        onSubmit: data => {
+          console.log(`[ManageTask ${variant}] onSubmit => `, data)
+        },
+      }
+      return <ManageTask {...props} />
+    },
+    play: async ({ canvasElement }) => {
+      const canvas = within(canvasElement)
+      // Confirm the default title
+      const titleField = canvas.getByLabelText(/Task Title/i)
+      expect(titleField).toHaveValue(`Existing Title [${variant}]`)
+
+      // Check "Save" button
+      const saveBtn = canvas.getByRole('button', { name: /Save/i })
+      await userEvent.click(saveBtn)
+    },
+  }
 }
 
-/**
- * 7) ShowTask (standalone)
- *    We do user interactions => keep async.
- */
+export const ManageTaskPopup_Customer = makeManageTaskStory(
+  'customer',
+  'ManageTask Popup - Customer Variant'
+)
+export const ManageTaskPopup_Company = makeManageTaskStory(
+  'company',
+  'ManageTask Popup - Company Variant'
+)
+export const ManageTaskPopup_Administrator = makeManageTaskStory(
+  'administrator',
+  'ManageTask Popup - Administrator Variant'
+)
+
+/* --------------------------------------------------------------------------
+   4) SHOWTASK POPUP STORY
+   (ShowTask has no "variant" so we just show it once)
+-------------------------------------------------------------------------- */
+
 export const ShowTaskPopup: StoryObj = {
   name: 'ShowTask Popup (Standalone)',
   render: () => {
@@ -347,6 +384,7 @@ export const ShowTaskPopup: StoryObj = {
       taskTitle: 'Sample Task Title',
       createdBy: 'John Doe',
       description: 'Lorem ipsum dolor sit amet...',
+
       comments: [
         {
           _id: 'comm-1',
@@ -359,26 +397,33 @@ export const ShowTaskPopup: StoryObj = {
           text: 'Another comment!',
         },
       ],
-      topics: sampleTopics.map(t => t.topic),
-      knowledgebaseArticles: sampleArticles.map(a => a.articleTitle),
-      statuses: sampleStatuses,
-      subStatuses: sampleSubStatuses,
-      severityLevels: sampleSeverityLevels,
-      schedulingQueues: sampleQueues,
-      customers: sampleCustomers,
-      employees: sampleEmployees,
+
+      // For ShowTask these are simple string fields:
+      status: 'Open',
+      subStatus: 'Pending Info',
+      severity: 'High',
+      schedulingQueue: 'Tier 1 Support',
+      topics: ['Frontend', 'Backend'],
+      knowledgebaseArticles: ['Setup Guide', 'Troubleshooting FAQ'],
+      teamMemberAssigned: 'Jane Smith',
+      nextActionDate: '09/15/2023 - 8:30AM CST',
+
+      onComment: text => console.log('ShowTask onComment =>', text),
+      onCloseTask: () => console.log('ShowTask onCloseTask'),
+      onEdit: () => console.log('ShowTask onEdit'),
+      onDelete: () => console.log('ShowTask onDelete'),
+      onDuplicate: () => console.log('ShowTask onDuplicate'),
     }
     return <ShowTask {...props} />
   },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement)
-
     // Check for the title text
     expect(canvas.getByText('Sample Task Title')).toBeInTheDocument()
     // Check for a comment
     expect(canvas.getByText('First comment here!')).toBeInTheDocument()
 
-    // Attempt "Comment" button
+    // Try the "Comment" button (just ensures it's present/clickable)
     const commentBtn = canvas.getByRole('button', { name: /Comment/i })
     await userEvent.click(commentBtn)
   },

@@ -1,4 +1,5 @@
 // src\components\ProjectBoard\ShowTask\client.tsx
+
 'use client'
 
 import React, { useState } from 'react'
@@ -17,6 +18,9 @@ import Typography from '../../Typography'
 import TextField from '../../TextField'
 import CustomButton from '../../Button'
 
+// Import colors from your palette
+import { gunpowder, woad, red, white, black } from '../../../styles/palette' // adjust import path if needed
+
 // Example comment type. You can adapt it to your real data.
 export interface ShowTaskComment {
   _id: string
@@ -25,55 +29,36 @@ export interface ShowTaskComment {
 }
 
 /**
- * Props for ShowTask.  It expects simple string arrays for `topics` and
- * `knowledgebaseArticles`. We also define some optional props (tasks, statuses, etc.)
- * if you want them for future expansions, but we won't render them here.
+ * Props for ShowTask. It expects simple string arrays for `topics` and
+ * `knowledgebaseArticles`.
  */
 export interface ShowTaskProps {
   open: boolean
   onClose: () => void
 
-  /** If you want to pass the entire tasks array, statuses, etc., add them as optional. */
-  tasks?: unknown
-  statuses?: unknown
-  subStatuses?: unknown
-  schedulingQueues?: unknown
-  customers?: unknown
-  employees?: unknown
-  severityLevels?: unknown
-
-  /**
-   * The main task info to display:
-   * - taskTitle
-   * - createdBy (e.g., "John Doe")
-   * - description
-   * - comments
-   */
+  // Optional props for data
   taskTitle?: string
   createdBy?: string
   description?: string
   comments?: ShowTaskComment[]
 
-  /** Right-side fields to show as chips (or simple text). */
+  // Right-side fields
   customerAssigned?: string
   severity?: string
   schedulingQueue?: string
   status?: string
   subStatus?: string
-
-  /** We expect plain string[] for topics & knowledgebaseArticles. */
   topics?: string[]
   knowledgebaseArticles?: string[]
-
-  /** Another field for the right side. */
   teamMemberAssigned?: string
-  nextActionDate?: string // e.g. "09/15/2023 - 8:30AM CST"
+  nextActionDate?: string
 
-  /** Called when user clicks "Close Task" or "Comment," if needed. */
+  // Called when user clicks "Close Task" or "Comment"
   onCloseTask?: () => void
   onComment?: (commentText: string) => void
 
-  /** If you want to handle "Edit," "Delete," or "Duplicate" click events. */
+  // Called when user clicks Edit, Delete, or Duplicate.
+  // If they exist, we display the respective buttons.
   onEdit?: () => void
   onDelete?: () => void
   onDuplicate?: () => void
@@ -83,20 +68,28 @@ const ShowTask: React.FC<ShowTaskProps> = ({
   open,
   onClose,
 
-  taskTitle = 'Untitled Task',
-  createdBy = 'Unknown User',
-  description = '',
-  comments = [],
+  // Use placeholder text if no props are passed
+  taskTitle = 'Task Title',
+  createdBy = '{firstname and lastname}',
+  description = 'This is the description of the task and can be edited by hitting the edit button otherwise it is a noneditable page.',
+  comments = [
+    {
+      _id: 'example-comment',
+      authorName: '{firstname and lastname}',
+      text: 'This is a comment on the task and can be made by any user.',
+    },
+  ],
 
-  customerAssigned,
-  severity,
-  schedulingQueue,
-  status,
-  subStatus,
-  topics = [],
-  knowledgebaseArticles = [],
-  teamMemberAssigned,
-  nextActionDate,
+  // Right side placeholders (Figma example)
+  customerAssigned = 'Bobbie Sue',
+  severity = 'Critical',
+  schedulingQueue = 'Technologies Unlimited',
+  status = 'Open',
+  subStatus = 'In Progress',
+  topics = ['Technical Support'],
+  knowledgebaseArticles = ['How to Troubleshoot Stuff'],
+  teamMemberAssigned = 'Matthew Goluba',
+  nextActionDate = '09/15/2023 - 8:30AM CST',
 
   onCloseTask,
   onComment,
@@ -104,10 +97,10 @@ const ShowTask: React.FC<ShowTaskProps> = ({
   onDelete,
   onDuplicate,
 }) => {
-  // Track the new comment text
+  // Track new comment text
   const [newComment, setNewComment] = useState('')
 
-  // Handler for posting a comment
+  // Handler for adding a comment
   const handleComment = () => {
     if (onComment && newComment.trim() !== '') {
       onComment(newComment.trim())
@@ -115,12 +108,21 @@ const ShowTask: React.FC<ShowTaskProps> = ({
     }
   }
 
+  // Reusable style for each label+Chip row on the right
+  const rightSideRowStyle = {
+    display: 'flex',
+    flexDirection: 'column' as const,
+    gap: 0.5,
+    pb: 1,
+    borderBottom: '1px solid black',
+  }
+
   return (
     <Dialog open={open} onClose={onClose} maxWidth="lg" fullWidth>
-      {/* Title row, with an "X" and action buttons in the top-right */}
+      {/* Title row, with an "X" and action buttons on the right */}
       <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between' }}>
         <Box sx={{ display: 'flex', flexDirection: 'column' }}>
-          {/* Task Title */}
+          {/* Task Title (bold) */}
           <Typography
             fontvariant="merriparagraph"
             fontcolor="black"
@@ -136,10 +138,9 @@ const ShowTask: React.FC<ShowTaskProps> = ({
           />
         </Box>
 
-        {/* Right-side top actions: Edit / Delete / Duplicate + an "X" to close */}
+        {/* Right-side top actions: Edit / Delete / Duplicate + an "X" */}
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
           <Box sx={{ display: 'flex', flexDirection: 'row', gap: 1 }}>
-            {/* If you have actual callbacks, show them; else hide */}
             {onEdit && (
               <CustomButton
                 text="Edit"
@@ -174,9 +175,9 @@ const ShowTask: React.FC<ShowTaskProps> = ({
 
       <DialogContent>
         <Box sx={{ display: 'grid', gridTemplateColumns: '3fr 1fr', gap: 2 }}>
-          {/* Left side: description, comments, comment box */}
+          {/* Left side: description, existing comments, new comment */}
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-            {/* Task Description */}
+            {/* Task Description block */}
             <Box
               sx={{
                 border: '1px solid #ccc',
@@ -205,7 +206,7 @@ const ShowTask: React.FC<ShowTaskProps> = ({
                 <Typography
                   fontvariant="merriparagraph"
                   fontcolor="black"
-                  text={`${comment.authorName}`}
+                  text={comment.authorName}
                   sx={{ fontWeight: 'bold' }}
                 />
                 <Typography
@@ -240,169 +241,189 @@ const ShowTask: React.FC<ShowTaskProps> = ({
                 {onCloseTask && (
                   <CustomButton
                     text="Close Task"
-                    backgroundcolor="#5e3d8a"
-                    fontcolor="white"
+                    backgroundcolor={gunpowder.main}
+                    fontcolor={white.main}
                     onClick={onCloseTask}
                   />
                 )}
                 <CustomButton
                   text="Comment"
-                  backgroundcolor="#4B0082"
-                  fontcolor="white"
+                  backgroundcolor={woad.dark}
+                  fontcolor={white.main}
                   onClick={handleComment}
                 />
               </Box>
             </Box>
           </Box>
 
-          {/* Right side: labeled fields with chips */}
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-            {customerAssigned && (
-              <Box>
-                <Typography
-                  fontvariant="merriparagraph"
-                  fontcolor="black"
-                  text="Customer Assigned"
-                  sx={{ fontWeight: 'bold', fontSize: '14px' }}
-                />
-                <Chip
-                  label={customerAssigned}
-                  color="primary"
-                  variant="outlined"
-                />
-              </Box>
-            )}
+          {/* Right side: black box around labeled fields+chips */}
+          <Box
+            sx={{
+              border: '2px solid black',
+              borderRadius: '8px',
+              padding: 2,
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 2,
+            }}
+          >
+            {/* Customer Assigned */}
+            <Box sx={rightSideRowStyle}>
+              <Typography
+                fontvariant="merriparagraph"
+                fontcolor="black"
+                text="Customer Assigned"
+                sx={{ fontWeight: 'bold', fontSize: '14px' }}
+              />
+              <Chip
+                label={customerAssigned}
+                variant="filled"
+                sx={{
+                  backgroundColor: woad.main,
+                  color: white.main,
+                }}
+              />
+            </Box>
 
-            {severity && (
-              <Box>
-                <Typography
-                  fontvariant="merriparagraph"
-                  fontcolor="black"
-                  text="Severity"
-                  sx={{ fontWeight: 'bold', fontSize: '14px' }}
-                />
-                <Chip
-                  label={severity}
-                  color="error" // e.g. "Critical" => red
-                  variant="outlined"
-                />
-              </Box>
-            )}
+            {/* Severity */}
+            <Box sx={rightSideRowStyle}>
+              <Typography
+                fontvariant="merriparagraph"
+                fontcolor="black"
+                text="Severity"
+                sx={{ fontWeight: 'bold', fontSize: '14px' }}
+              />
+              <Chip
+                label={severity}
+                variant="filled"
+                sx={{
+                  backgroundColor: red.main,
+                  color: white.main,
+                }}
+              />
+            </Box>
 
-            {schedulingQueue && (
-              <Box>
-                <Typography
-                  fontvariant="merriparagraph"
-                  fontcolor="black"
-                  text="Scheduling Queue"
-                  sx={{ fontWeight: 'bold', fontSize: '14px' }}
-                />
-                <Chip
-                  label={schedulingQueue}
-                  color="primary"
-                  variant="outlined"
-                />
-              </Box>
-            )}
+            {/* Scheduling Queue */}
+            <Box sx={rightSideRowStyle}>
+              <Typography
+                fontvariant="merriparagraph"
+                fontcolor="black"
+                text="Scheduling Queue"
+                sx={{ fontWeight: 'bold', fontSize: '14px' }}
+              />
+              <Chip
+                label={schedulingQueue}
+                variant="filled"
+                sx={{
+                  // Example pinkish color
+                  backgroundColor: '#C48EA6',
+                  color: white.main,
+                }}
+              />
+            </Box>
 
-            {status && (
-              <Box>
-                <Typography
-                  fontvariant="merriparagraph"
-                  fontcolor="black"
-                  text="Status"
-                  sx={{ fontWeight: 'bold', fontSize: '14px' }}
-                />
-                <Chip label={status} color="success" variant="outlined" />
-              </Box>
-            )}
+            {/* Status */}
+            <Box sx={rightSideRowStyle}>
+              <Typography
+                fontvariant="merriparagraph"
+                fontcolor="black"
+                text="Status"
+                sx={{ fontWeight: 'bold', fontSize: '14px' }}
+              />
+              <Chip
+                label={status}
+                variant="filled"
+                sx={{
+                  backgroundColor: black.main,
+                  color: white.main,
+                }}
+              />
+            </Box>
 
-            {subStatus && (
-              <Box>
-                <Typography
-                  fontvariant="merriparagraph"
-                  fontcolor="black"
-                  text="Sub Status"
-                  sx={{ fontWeight: 'bold', fontSize: '14px' }}
-                />
-                <Chip label={subStatus} color="info" variant="outlined" />
-              </Box>
-            )}
+            {/* Sub Status */}
+            <Box sx={rightSideRowStyle}>
+              <Typography
+                fontvariant="merriparagraph"
+                fontcolor="black"
+                text="Sub Status"
+                sx={{ fontWeight: 'bold', fontSize: '14px' }}
+              />
+              <Chip label={subStatus} variant="filled" color="info" />
+            </Box>
 
-            {topics.length > 0 && (
-              <Box>
-                <Typography
-                  fontvariant="merriparagraph"
-                  fontcolor="black"
-                  text="Topics"
-                  sx={{ fontWeight: 'bold', fontSize: '14px' }}
-                />
-                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mt: 1 }}>
-                  {topics.map((topic, idx) => (
-                    <Chip
-                      key={idx}
-                      label={topic}
-                      color="success"
-                      variant="outlined"
-                    />
-                  ))}
-                </Box>
+            {/* Topics */}
+            <Box sx={rightSideRowStyle}>
+              <Typography
+                fontvariant="merriparagraph"
+                fontcolor="black"
+                text="Topics"
+                sx={{ fontWeight: 'bold', fontSize: '14px' }}
+              />
+              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mt: 1 }}>
+                {topics.map((topic, idx) => (
+                  <Chip
+                    key={idx}
+                    label={topic}
+                    variant="filled"
+                    color="success"
+                  />
+                ))}
               </Box>
-            )}
+            </Box>
 
-            {knowledgebaseArticles.length > 0 && (
-              <Box>
-                <Typography
-                  fontvariant="merriparagraph"
-                  fontcolor="black"
-                  text="Knowledgebase Articles"
-                  sx={{ fontWeight: 'bold', fontSize: '14px' }}
-                />
-                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mt: 1 }}>
-                  {knowledgebaseArticles.map((article, idx) => (
-                    <Chip
-                      key={idx}
-                      label={article}
-                      color="warning"
-                      variant="outlined"
-                    />
-                  ))}
-                </Box>
+            {/* Knowledgebase Articles */}
+            <Box sx={rightSideRowStyle}>
+              <Typography
+                fontvariant="merriparagraph"
+                fontcolor="black"
+                text="Knowledgebase Articles"
+                sx={{ fontWeight: 'bold', fontSize: '14px' }}
+              />
+              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mt: 1 }}>
+                {knowledgebaseArticles.map((article, idx) => (
+                  <Chip
+                    key={idx}
+                    label={article}
+                    variant="filled"
+                    color="warning"
+                  />
+                ))}
               </Box>
-            )}
+            </Box>
 
-            {teamMemberAssigned && (
-              <Box>
-                <Typography
-                  fontvariant="merriparagraph"
-                  fontcolor="black"
-                  text="Team Member Assigned"
-                  sx={{ fontWeight: 'bold', fontSize: '14px' }}
-                />
-                <Chip
-                  label={teamMemberAssigned}
-                  color="primary"
-                  variant="outlined"
-                />
-              </Box>
-            )}
+            {/* Team Member Assigned */}
+            <Box sx={rightSideRowStyle}>
+              <Typography
+                fontvariant="merriparagraph"
+                fontcolor="black"
+                text="Team Member Assigned"
+                sx={{ fontWeight: 'bold', fontSize: '14px' }}
+              />
+              <Chip
+                label={teamMemberAssigned}
+                variant="filled"
+                sx={{
+                  backgroundColor: woad.main,
+                  color: white.main,
+                }}
+              />
+            </Box>
 
-            {nextActionDate && (
-              <Box>
-                <Typography
-                  fontvariant="merriparagraph"
-                  fontcolor="black"
-                  text="Next Action Date"
-                  sx={{ fontWeight: 'bold', fontSize: '14px' }}
-                />
-                <Typography
-                  fontvariant="merriparagraph"
-                  fontcolor="black"
-                  text={nextActionDate}
-                  sx={{ fontSize: '14px' }}
-                />
-              </Box>
-            )}
+            {/* Next Action Date */}
+            <Box sx={rightSideRowStyle}>
+              <Typography
+                fontvariant="merriparagraph"
+                fontcolor="black"
+                text="Next Action Date"
+                sx={{ fontWeight: 'bold', fontSize: '14px' }}
+              />
+              <Typography
+                fontvariant="merriparagraph"
+                fontcolor="black"
+                text={nextActionDate}
+                sx={{ fontSize: '14px' }}
+              />
+            </Box>
           </Box>
         </Box>
       </DialogContent>
