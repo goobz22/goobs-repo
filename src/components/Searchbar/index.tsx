@@ -58,7 +58,7 @@ const StyledOutlinedInput = styled(OutlinedInput)<{
   '& input': {
     color: fontcolor || palette.black.main,
     padding: '0 12px',
-    paddingLeft: '7px',
+    paddingLeft: '0px',
     height: '100%',
     '&::placeholder': {
       color: fontcolor || palette.black.main,
