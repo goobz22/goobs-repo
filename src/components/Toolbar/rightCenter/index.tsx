@@ -2,7 +2,7 @@
 
 import React from 'react'
 import { Box, useMediaQuery } from '@mui/material'
-import ReusableSelector from '../../ReusableSelector'
+import ManageRow from '../../DataGrid/ManageRow'
 
 export interface RightCenterProps {
   selectedRows?: string[]
@@ -38,7 +38,7 @@ function RightCenter({
         padding: isTabletOrBelow ? '0 5px' : '0 15px',
       }}
     >
-      <ReusableSelector
+      <ManageRow
         selectedRows={selectedRows}
         rows={rows}
         onDuplicate={onDuplicate}
