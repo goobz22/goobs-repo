@@ -1,25 +1,23 @@
-// src/components/ProjectBoard/index.tsx
-
 'use client'
 
 import React, { useMemo, useEffect, useState } from 'react'
 import { Box, Stack } from '@mui/material'
 import { useAtom } from 'jotai'
 import { columnsAtom } from './jotai/atom'
+
 import Toolbar from '../Toolbar'
-import AddTask from './AddTask/client'
-import ManageTask from './ManageTask/client'
-import ShowTask from './ShowTask/client'
+import AddTask from './forms/AddTask/client'
+import ManageTask from './forms/ManageTask/client'
+import ShowTask from './forms/ShowTask/client'
 import { ProjectBoardProps, ColumnData, Task, BoardType } from './types'
 
 import { useColumnDragAndDrop } from './utils/useDragandDrop/columns'
 import { useComputeBoardResize } from './utils/useComputeBoard'
+import Board from './board' // <-- Our new Board component (desktop/tablet/mobile)
 
-import Column from './Column'
+// 1) IMPORT the palette here
+import * as palette from '../../styles/palette'
 
-/**
- * Safely merges columns + tasks for display, ensuring each column has its `tasks` array.
- */
 function mergeColumnsAndTasks(
   columns: Array<{ _id: string; title: string; description: string }>,
   tasks: Task[],
@@ -76,9 +74,9 @@ function ProjectBoard({
   onCloseTask,
   onComment,
 }: ProjectBoardProps) {
-  // ------------------------------------------------
-  // 1) Use a Jotai atom for global columns + tasks
-  // ------------------------------------------------
+  // -----------------------------------------------------------------
+  // 1) Use a Jotai atom for columns + tasks
+  // -----------------------------------------------------------------
   const [columnState, setColumnState] = useAtom(columnsAtom)
 
   // Merge incoming data => single array
@@ -91,9 +89,9 @@ function ProjectBoard({
     setColumnState(mergedColumns)
   }, [mergedColumns, setColumnState])
 
-  // ------------------------------------------------
+  // -----------------------------------------------------------------
   // 2) Single-task selection state
-  // ------------------------------------------------
+  // -----------------------------------------------------------------
   const [selectedTask, setSelectedTask] = useState<{
     colIndex: number
     taskIndex: number
@@ -115,15 +113,15 @@ function ProjectBoard({
     return columnState.flatMap(col => col.tasks)
   }, [columnState])
 
-  // ------------------------------------------------
+  // -----------------------------------------------------------------
   // 3) COLUMN-LEVEL DRAG & DROP
-  // ------------------------------------------------
+  // -----------------------------------------------------------------
   const { handleColumnDragStart, handleColumnDragOver, handleColumnDrop } =
     useColumnDragAndDrop(columnState, setColumnState)
 
-  // ------------------------------------------------
+  // -----------------------------------------------------------------
   // 4) Local state for modals
-  // ------------------------------------------------
+  // -----------------------------------------------------------------
   const [addTaskOpen, setAddTaskOpen] = useState(false)
   const [localManageTaskOpen, setLocalManageTaskOpen] = useState('-1')
   const [localShowTaskOpen, setLocalShowTaskOpen] = useState('-1')
@@ -131,9 +129,9 @@ function ProjectBoard({
   const manageTaskOpen = manageTaskProp ?? localManageTaskOpen
   const showTaskOpen = showTaskProp ?? localShowTaskOpen
 
-  // ------------------------------------------------
-  // 5) AddTask
-  // ------------------------------------------------
+  // -----------------------------------------------------------------
+  // 5) AddTask handler
+  // -----------------------------------------------------------------
   function handleAddTaskSubmit(newTask: Omit<Task, '_id'>) {
     if (columnState.length === 0) return
     const newCols = [...columnState]
@@ -166,9 +164,9 @@ function ProjectBoard({
     setAddTaskOpen(false)
   }
 
-  // ------------------------------------------------
-  // 6) ManageTask
-  // ------------------------------------------------
+  // -----------------------------------------------------------------
+  // 6) ManageTask handler
+  // -----------------------------------------------------------------
   function handleManageTaskSubmit(data: {
     taskTitle: string
     taskDescription: string
@@ -196,7 +194,7 @@ function ProjectBoard({
     })
     setColumnState(newCols)
 
-    // Optional external update
+    // Optionally call external update
     onUpdateTask?.({
       companyId: company?._id || 'missing-company-id',
       _id: selectedTaskId,
@@ -206,15 +204,14 @@ function ProjectBoard({
       },
     })
 
-    // Close local manageTask
     if (!manageTaskProp) {
       setLocalManageTaskOpen('-1')
     }
   }
 
-  // ------------------------------------------------
-  // 7) ShowTask
-  // ------------------------------------------------
+  // -----------------------------------------------------------------
+  // 7) ShowTask handler
+  // -----------------------------------------------------------------
   const currentShowTask = allTasks.find(t => t._id === showTaskOpen)
 
   const showTaskTitle = currentShowTask?.title || 'Placeholder Title'
@@ -238,9 +235,9 @@ function ProjectBoard({
   const showTaskNextActionDate =
     currentShowTask?.nextActionDate || '09/15/2023 - 8:30AM CST'
 
-  // ------------------------------------------------
+  // -----------------------------------------------------------------
   // 8) SEARCH + FILTER
-  // ------------------------------------------------
+  // -----------------------------------------------------------------
   const [searchTerm, setSearchTerm] = useState('')
 
   function handleSearchChange(e: React.ChangeEvent<HTMLInputElement>) {
@@ -259,9 +256,9 @@ function ProjectBoard({
     })
   }, [columnState, searchTerm])
 
-  // ------------------------------------------------
-  // 9) "Fit / overflow" for columns in desktop
-  // ------------------------------------------------
+  // -----------------------------------------------------------------
+  // 9) "Fit / Overflow" columns for Desktop
+  // -----------------------------------------------------------------
   const {
     containerRef,
     fittedColumns,
@@ -274,9 +271,9 @@ function ProjectBoard({
     showOverflowDropdown: true,
   })
 
-  // ------------------------------------------------
+  // -----------------------------------------------------------------
   // 10) Render
-  // ------------------------------------------------
+  // -----------------------------------------------------------------
   const exactlyOneSelected = selectedTask !== null
   let selectedTaskId = ''
   if (exactlyOneSelected) {
@@ -332,39 +329,28 @@ function ProjectBoard({
           label: 'Search...',
           value: searchTerm,
           onChange: handleSearchChange,
+
+          // 2) USE semiTransparentWhite.main FOR THE SEARCHBAR BG
+          backgroundcolor: palette.semiTransparentWhite.main,
+          shrunkfontcolor: palette.white.main,
+          unshrunkfontcolor: palette.white.main,
+          shrunklabelposition: 'onNotch',
         }}
       />
 
+      {/* Our new Board component handles desktop/tablet/mobile layouts */}
       <Stack direction="row" spacing={3} mt={1} pl={4}>
-        {/* Render "fitted" columns */}
-        {fittedColumns.map(col => (
-          <Column
-            key={col._id}
-            columns={[col]}
-            selectedTask={selectedTask}
-            onSelectTask={handleSelectTask}
-            // Column-level DnD
-            onColumnDragStart={handleColumnDragStart}
-            onColumnDragOver={handleColumnDragOver}
-            onColumnDrop={handleColumnDrop}
-          />
-        ))}
-
-        {/* If there's an overflow column, show it */}
-        {overflowColumns.length > 0 && (
-          <Column
-            key="overflow-column"
-            columns={[]}
-            overflowColumns={overflowColumns}
-            selectedOverflowColumnId={selectedOverflowColumnId}
-            onChangeSelectedOverflowColumn={setSelectedOverflowColumnId}
-            selectedTask={selectedTask}
-            onSelectTask={handleSelectTask}
-            onColumnDragStart={handleColumnDragStart}
-            onColumnDragOver={handleColumnDragOver}
-            onColumnDrop={handleColumnDrop}
-          />
-        )}
+        <Board
+          columns={fittedColumns}
+          overflowColumns={overflowColumns}
+          selectedOverflowColumnId={selectedOverflowColumnId}
+          onChangeSelectedOverflowColumn={setSelectedOverflowColumnId}
+          selectedTask={selectedTask}
+          onSelectTask={handleSelectTask}
+          onColumnDragStart={handleColumnDragStart}
+          onColumnDragOver={handleColumnDragOver}
+          onColumnDrop={handleColumnDrop}
+        />
       </Stack>
 
       {/* AddTask Modal */}

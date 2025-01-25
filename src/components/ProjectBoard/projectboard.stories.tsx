@@ -16,12 +16,12 @@ import {
   CompanyInfo,
   Task,
 } from './types'
-import AddTask, { AddTaskProps, AddTaskVariant } from './AddTask/client'
+import AddTask, { AddTaskProps, AddTaskVariant } from './forms/AddTask/client'
 import ManageTask, {
   ManageTaskProps,
   ManageTaskVariant,
-} from './ManageTask/client'
-import ShowTask, { ShowTaskProps } from './ShowTask/client'
+} from './forms/ManageTask/client'
+import ShowTask, { ShowTaskProps } from './forms/ShowTask/client'
 
 /**
  * We define a single default export referencing the ProjectBoard as the main component.
@@ -408,11 +408,16 @@ export const ShowTaskPopup: StoryObj = {
       teamMemberAssigned: 'Jane Smith',
       nextActionDate: '09/15/2023 - 8:30AM CST',
 
+      // Provide these so we can see the edit/comment buttons in action:
       onComment: text => console.log('ShowTask onComment =>', text),
       onCloseTask: () => console.log('ShowTask onCloseTask'),
       onEdit: () => console.log('ShowTask onEdit'),
       onDelete: () => console.log('ShowTask onDelete'),
       onDuplicate: () => console.log('ShowTask onDuplicate'),
+
+      // The key fix: providing onEditComment so the edit icon is visible next to each comment
+      onEditComment: (commentId, newText) =>
+        console.log('ShowTask onEditComment =>', commentId, newText),
     }
     return <ShowTask {...props} />
   },
