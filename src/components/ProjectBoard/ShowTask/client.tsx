@@ -3,23 +3,16 @@
 'use client'
 
 import React, { useState } from 'react'
-import {
-  Box,
-  Dialog,
-  DialogContent,
-  DialogTitle,
-  IconButton,
-  Chip,
-} from '@mui/material'
+import { Box, Dialog, DialogContent, IconButton, Chip } from '@mui/material'
 import CloseIcon from '@mui/icons-material/Close'
 
 // Import your custom components
 import Typography from '../../Typography'
-import TextField from '../../TextField'
 import CustomButton from '../../Button'
+import ComplexTextEditor from '../../ComplexTextEditor'
 
 // Import colors from your palette
-import { gunpowder, woad, red, white, black } from '../../../styles/palette' // adjust import path if needed
+import { gunpowder, woad, red, white, black } from '../../../styles/palette'
 
 // Example comment type. You can adapt it to your real data.
 export interface ShowTaskComment {
@@ -69,27 +62,32 @@ const ShowTask: React.FC<ShowTaskProps> = ({
   onClose,
 
   // Use placeholder text if no props are passed
-  taskTitle = 'Task Title',
-  createdBy = '{firstname and lastname}',
-  description = 'This is the description of the task and can be edited by hitting the edit button otherwise it is a noneditable page.',
+  taskTitle = 'Sample Task Title',
+  createdBy = 'John Doe',
+  description = 'Lorem ipsum dolor sit amet...',
   comments = [
     {
-      _id: 'example-comment',
-      authorName: '{firstname and lastname}',
-      text: 'This is a comment on the task and can be made by any user.',
+      _id: 'example-1',
+      authorName: 'Alice',
+      text: 'First comment here!',
+    },
+    {
+      _id: 'example-2',
+      authorName: 'Bob',
+      text: 'Another comment!',
     },
   ],
 
-  // Right side placeholders (Figma example)
+  // Right side placeholders
   customerAssigned = 'Bobbie Sue',
-  severity = 'Critical',
-  schedulingQueue = 'Technologies Unlimited',
+  severity = 'High',
+  schedulingQueue = 'Tier 1 Support',
   status = 'Open',
-  subStatus = 'In Progress',
-  topics = ['Technical Support'],
-  knowledgebaseArticles = ['How to Troubleshoot Stuff'],
-  teamMemberAssigned = 'Matthew Goluba',
-  nextActionDate = '09/15/2023 - 8:30AM CST',
+  subStatus = 'Pending Info',
+  topics = ['Frontend', 'Backend'],
+  knowledgebaseArticles = ['Setup Guide', 'Troubleshooting FAQ'],
+  teamMemberAssigned = 'Jane Smith',
+  nextActionDate = '',
 
   onCloseTask,
   onComment,
@@ -112,35 +110,55 @@ const ShowTask: React.FC<ShowTaskProps> = ({
   const rightSideRowStyle = {
     display: 'flex',
     flexDirection: 'column' as const,
-    gap: 0.5,
-    pb: 1,
+    pb: 2,
     borderBottom: '1px solid black',
   }
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="lg" fullWidth>
-      {/* Title row, with an "X" and action buttons on the right */}
-      <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between' }}>
-        <Box sx={{ display: 'flex', flexDirection: 'column' }}>
-          {/* Task Title (bold) */}
-          <Typography
-            fontvariant="merriparagraph"
-            fontcolor="black"
-            text={taskTitle}
-            sx={{ fontSize: '18px', fontWeight: 'bold' }}
-          />
-          {/* Subtitle: "created by [name]" */}
-          <Typography
-            fontvariant="merriparagraph"
-            fontcolor="gray"
-            text={`created by ${createdBy}`}
-            sx={{ fontSize: '14px' }}
-          />
-        </Box>
+    <Dialog
+      open={open}
+      onClose={onClose}
+      maxWidth="lg"
+      fullWidth
+      /* This ensures the black outline follows the dialog corners */
+      PaperProps={{
+        sx: {
+          border: '2px solid black',
+          borderRadius: '8px',
+          overflow: 'hidden',
+          boxShadow: 'none', // remove default elevation shadow
+        },
+      }}
+    >
+      {/* Remove border from DialogContent, so we rely on the Paper's outline */}
+      <DialogContent sx={{ p: 0 }}>
+        {/* Top row: Title + "created by" on its own line + Edit/Delete/Duplicate/Close */}
+        <Box
+          sx={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            p: 2,
+            borderBottom: '2px solid black',
+          }}
+        >
+          {/* Left side: Title and "created by" on separate lines */}
+          <Box sx={{ display: 'flex', flexDirection: 'column' }}>
+            <Typography
+              fontvariant="merrih4"
+              fontcolor="black"
+              text={taskTitle}
+              sx={{ fontSize: '18px', fontWeight: 'bold' }}
+            />
+            <Typography
+              fontvariant="merrih5"
+              fontcolor="gray"
+              text={`created by ${createdBy}`}
+              sx={{ fontSize: '14px', mt: 0.5 }}
+            />
+          </Box>
 
-        {/* Right-side top actions: Edit / Delete / Duplicate + an "X" */}
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-          <Box sx={{ display: 'flex', flexDirection: 'row', gap: 1 }}>
+          {/* Right side: Edit/Delete/Duplicate + Close Icon */}
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             {onEdit && (
               <CustomButton
                 text="Edit"
@@ -165,28 +183,27 @@ const ShowTask: React.FC<ShowTaskProps> = ({
                 onClick={onDuplicate}
               />
             )}
+
+            <IconButton onClick={onClose}>
+              <CloseIcon />
+            </IconButton>
           </Box>
-
-          <IconButton onClick={onClose} sx={{ alignSelf: 'flex-start' }}>
-            <CloseIcon />
-          </IconButton>
         </Box>
-      </DialogTitle>
 
-      <DialogContent>
+        {/* Main content area: description/comments in left column, detail chips in right column */}
         <Box sx={{ display: 'grid', gridTemplateColumns: '3fr 1fr', gap: 2 }}>
-          {/* Left side: description, existing comments, new comment */}
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-            {/* Task Description block */}
+          {/* LEFT COLUMN */}
+          <Box sx={{ p: 2 }}>
+            {/* Description */}
             <Box
               sx={{
-                border: '1px solid #ccc',
-                padding: '8px',
-                borderRadius: '4px',
+                pb: 2,
+                mb: 2,
+                borderBottom: '1px solid black',
               }}
             >
               <Typography
-                fontvariant="merriparagraph"
+                fontvariant="merrih6"
                 fontcolor="black"
                 text={description}
                 sx={{ fontSize: '14px', whiteSpace: 'pre-wrap' }}
@@ -198,46 +215,51 @@ const ShowTask: React.FC<ShowTaskProps> = ({
               <Box
                 key={comment._id}
                 sx={{
-                  border: '1px solid #ccc',
-                  padding: '8px',
-                  borderRadius: '4px',
+                  pb: 2,
+                  mb: 2,
+                  borderBottom: '1px solid black',
                 }}
               >
+                {/* Author Name (bold) */}
                 <Typography
-                  fontvariant="merriparagraph"
+                  fontvariant="merrih5"
                   fontcolor="black"
                   text={comment.authorName}
-                  sx={{ fontWeight: 'bold' }}
+                  sx={{ display: 'block', fontWeight: 'bold', mb: 0.5 }}
                 />
+                {/* Comment Text on its own line below author */}
                 <Typography
                   fontvariant="merriparagraph"
                   fontcolor="black"
                   text={comment.text}
-                  sx={{ fontSize: '14px', mt: 0.5 }}
+                  sx={{ display: 'block', fontSize: '14px', mt: 0.5 }}
                 />
               </Box>
             ))}
 
-            {/* New Comment Box */}
+            {/* New Comment Editor + Buttons */}
             <Box
               sx={{
-                border: '1px solid #ccc',
-                padding: '8px',
-                borderRadius: '4px',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: 1,
+                pb: 2,
+                mb: 2,
+                borderBottom: '1px solid black',
               }}
             >
-              <TextField
-                label="Comment"
+              <ComplexTextEditor
                 value={newComment}
-                onChange={e => setNewComment(e.target.value)}
-                multiline
+                onChange={val => setNewComment(val)}
+                label="Comment"
                 minRows={3}
+                editorType="simple" // or "complex" if you prefer a full toolbar
               />
-              <Box sx={{ display: 'flex', gap: 1 }}>
-                {/* "Close Task" and "Comment" buttons */}
+              <Box
+                sx={{
+                  display: 'flex',
+                  justifyContent: 'flex-end',
+                  mt: 2,
+                  gap: 2,
+                }}
+              >
                 {onCloseTask && (
                   <CustomButton
                     text="Close Task"
@@ -256,12 +278,11 @@ const ShowTask: React.FC<ShowTaskProps> = ({
             </Box>
           </Box>
 
-          {/* Right side: black box around labeled fields+chips */}
+          {/* RIGHT COLUMN */}
           <Box
             sx={{
-              border: '2px solid black',
-              borderRadius: '8px',
-              padding: 2,
+              borderLeft: '2px solid black',
+              p: 2,
               display: 'flex',
               flexDirection: 'column',
               gap: 2,
@@ -281,6 +302,7 @@ const ShowTask: React.FC<ShowTaskProps> = ({
                 sx={{
                   backgroundColor: woad.main,
                   color: white.main,
+                  mt: 1,
                 }}
               />
             </Box>
@@ -299,6 +321,7 @@ const ShowTask: React.FC<ShowTaskProps> = ({
                 sx={{
                   backgroundColor: red.main,
                   color: white.main,
+                  mt: 1,
                 }}
               />
             </Box>
@@ -315,9 +338,9 @@ const ShowTask: React.FC<ShowTaskProps> = ({
                 label={schedulingQueue}
                 variant="filled"
                 sx={{
-                  // Example pinkish color
                   backgroundColor: '#C48EA6',
                   color: white.main,
+                  mt: 1,
                 }}
               />
             </Box>
@@ -336,6 +359,7 @@ const ShowTask: React.FC<ShowTaskProps> = ({
                 sx={{
                   backgroundColor: black.main,
                   color: white.main,
+                  mt: 1,
                 }}
               />
             </Box>
@@ -348,7 +372,12 @@ const ShowTask: React.FC<ShowTaskProps> = ({
                 text="Sub Status"
                 sx={{ fontWeight: 'bold', fontSize: '14px' }}
               />
-              <Chip label={subStatus} variant="filled" color="info" />
+              <Chip
+                label={subStatus}
+                variant="filled"
+                color="info"
+                sx={{ mt: 1 }}
+              />
             </Box>
 
             {/* Topics */}
@@ -405,12 +434,13 @@ const ShowTask: React.FC<ShowTaskProps> = ({
                 sx={{
                   backgroundColor: woad.main,
                   color: white.main,
+                  mt: 1,
                 }}
               />
             </Box>
 
             {/* Next Action Date */}
-            <Box sx={rightSideRowStyle}>
+            <Box sx={{ display: 'flex', flexDirection: 'column' }}>
               <Typography
                 fontvariant="merriparagraph"
                 fontcolor="black"
@@ -421,7 +451,7 @@ const ShowTask: React.FC<ShowTaskProps> = ({
                 fontvariant="merriparagraph"
                 fontcolor="black"
                 text={nextActionDate}
-                sx={{ fontSize: '14px' }}
+                sx={{ fontSize: '14px', mt: 1 }}
               />
             </Box>
           </Box>
