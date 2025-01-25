@@ -39,6 +39,7 @@ import QRCodeComponent, { QRCodeProps } from './components/QRCode'
 import FormProjectBoard, {
   FormProjectBoardProps,
 } from './components/Form/ProjectBoard'
+import MultiSelectChip, { MultiSelectChipProps } from './components/MultiSelect'
 
 // Here is the new horizontal `Tabs` import
 import Tabs, { TabsProps } from './components/Tabs'
@@ -154,13 +155,15 @@ import { formContainerStyle } from './styles/Form'
 /* -------------------------------------------------------------------------- */
 /*                      NEW: ProjectBoard Sub-Components                      */
 /* -------------------------------------------------------------------------- */
-import AddTask, { AddTaskProps } from './components/ProjectBoard/AddTask/client'
+import AddTask, {
+  AddTaskProps,
+} from './components/ProjectBoard/forms/AddTask/client'
 import ShowTask, {
   ShowTaskProps,
-} from './components/ProjectBoard/ShowTask/client'
+} from './components/ProjectBoard/forms/ShowTask/client'
 import ManageTask, {
   ManageTaskProps,
-} from './components/ProjectBoard/ManageTask/client'
+} from './components/ProjectBoard/forms/ManageTask/client'
 
 /* -------------------------------------------------------------------------- */
 /*                            Type Declarations                               */
@@ -238,7 +241,7 @@ export { TransferList }
 export { StyledTooltip }
 export { formContainerStyle }
 export { QRCodeComponent }
-
+export { MultiSelectChip }
 // Horizontal Tabs export
 export { Tabs }
 
@@ -290,6 +293,7 @@ export type { ExtendedRadioGroupProps }
 export type { ExtendedPhoneNumberFieldProps }
 export type { ExtendedComplexEditorProps }
 export type { ExtendedProjectBoardProps }
+export type { MultiSelectChipProps }
 
 // "Local" type exports for existing components
 export type { CustomButtonProps }
