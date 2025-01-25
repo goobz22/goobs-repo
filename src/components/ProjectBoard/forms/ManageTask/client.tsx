@@ -1,9 +1,9 @@
 'use client'
 
 import React, { useMemo, useState } from 'react'
-import Popup from '../../Form/Popup' // <-- Import your Popup or PopupForm
-import { ContentSectionProps } from '../../Content'
-import { TransferListDropdownDataMap } from '../../TransferList'
+import Popup from '../../../Form/Popup' // <-- Import your Popup or PopupForm
+import { ContentSectionProps } from '../../../Content'
+import { TransferListDropdownDataMap } from '../../../TransferList'
 
 // Import the relevant types from your shared `types.ts`
 import type {
@@ -17,7 +17,7 @@ import type {
   RawQueue,
   RawArticle,
   RawEmployee,
-} from '../types'
+} from '../../types'
 
 /** If you declared an "Administrator" interface in your types, import it too: */
 // import type { Administrator } from '../types'
