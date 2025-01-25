@@ -8,6 +8,9 @@ import Searchbar, { SearchbarProps } from '../../Searchbar'
 
 const LeftCenter: FC<Partial<SearchbarProps>> = props => {
   const {
+    shrunklabelposition,
+    shrunkfontcolor,
+    unshrunkfontcolor,
     label,
     backgroundcolor,
     iconcolor,
@@ -23,13 +26,16 @@ const LeftCenter: FC<Partial<SearchbarProps>> = props => {
     <Box
       sx={{
         display: 'flex',
-        alignItems: 'center',
+        alignItems: 'flex-end',
         width: '400px',
-        height: '50px',
+        height: '55px',
       }}
     >
-      <Box sx={{ marginTop: '-10px' }}>
+      <Box sx={{ marginBottom: '10px' }}>
         <Searchbar
+          shrunklabelposition={shrunklabelposition}
+          shrunkfontcolor={shrunkfontcolor}
+          unshrunkfontcolor={unshrunkfontcolor}
           label={label}
           backgroundcolor={backgroundcolor}
           iconcolor={iconcolor}
