@@ -30,6 +30,10 @@ const meta: Meta<typeof SearchableDropdown> = {
     shrunkfontcolor: { control: 'color' },
     unshrunkfontcolor: { control: 'color' },
     placeholdercolor: { control: 'color' },
+    shrunklabelposition: {
+      control: 'select',
+      options: ['onNotch', 'aboveNotch'],
+    },
   },
 }
 export default meta
@@ -167,6 +171,7 @@ export const CustomColors: Story = {
     inputfontcolor: '#e91e63',
     shrunkfontcolor: '#673ab7',
     unshrunkfontcolor: '#9c27b0',
+    shrunklabelposition: 'onNotch',
     placeholdercolor: '#42a5f5',
     placeholder: 'Enter something...',
   },

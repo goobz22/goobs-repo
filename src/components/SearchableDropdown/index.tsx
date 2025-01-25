@@ -41,28 +41,54 @@ const StyledAutocomplete = styled(
   outlinecolor?: string
   fontcolor?: string
   inputfontcolor?: string
-}>(({ outlinecolor, fontcolor, inputfontcolor }) => ({
-  '& .MuiOutlinedInput-root': {
-    overflow: 'visible',
-    minHeight: '45px', // forced 45px
-    height: '45px !important', // double-enforced
-    '& fieldset': {
-      borderColor: outlinecolor || black.main,
+  shrunkfontcolor?: string
+  unshrunkfontcolor?: string
+  shrunklabelposition?: 'onNotch' | 'aboveNotch'
+}>(
+  ({
+    outlinecolor,
+    fontcolor,
+    inputfontcolor,
+    shrunkfontcolor,
+    unshrunkfontcolor,
+    shrunklabelposition,
+  }) => ({
+    '& .MuiOutlinedInput-root': {
+      overflow: 'visible',
+      minHeight: '45px',
+      height: '45px !important',
+      '& fieldset': {
+        borderColor: outlinecolor || black.main,
+      },
+      '&:hover fieldset': {
+        borderColor: outlinecolor || black.main,
+      },
+      '&.Mui-focused fieldset': {
+        borderColor: outlinecolor || black.main,
+      },
     },
-    '&:hover fieldset': {
-      borderColor: outlinecolor || black.main,
+    '& .MuiAutocomplete-input': {
+      color: inputfontcolor || fontcolor || black.main,
+      paddingTop: '0px',
+      paddingBottom: '0px',
     },
-    '&.Mui-focused fieldset': {
-      borderColor: outlinecolor || black.main,
+    '& .MuiInputLabel-root': {
+      color: unshrunkfontcolor || 'black',
+      '&.Mui-focused': {
+        color: shrunkfontcolor || 'black',
+      },
+      '&.MuiInputLabel-shrink': {
+        color: shrunkfontcolor || 'black',
+        ...(shrunklabelposition === 'aboveNotch' && {
+          transform: 'translate(0px, -17px) scale(0.75)',
+        }),
+        ...(shrunklabelposition === 'onNotch' && {
+          transform: 'translate(13px, -5px) scale(0.75)',
+        }),
+      },
     },
-  },
-  '& .MuiAutocomplete-input': {
-    color: inputfontcolor || fontcolor || black.main,
-    // Remove extra padding so total stays at 45px:
-    paddingTop: '0px',
-    paddingBottom: '0px',
-  },
-}))
+  })
+)
 
 const SearchableDropdown: React.FC<SearchableDropdownProps> = ({
   label,
@@ -75,7 +101,7 @@ const SearchableDropdown: React.FC<SearchableDropdownProps> = ({
   shrunkfontcolor = black.main,
   unshrunkfontcolor = black.main,
   placeholdercolor = black.main,
-  shrunklabelposition = 'onNotch',
+  shrunklabelposition = 'onNotch', // Defaults to 'onNotch'
   onChange,
   error = false,
   helperText,
@@ -207,6 +233,12 @@ const SearchableDropdown: React.FC<SearchableDropdownProps> = ({
                 overflow: 'visible',
                 '&.MuiInputLabel-shrink': {
                   color: shrunkfontcolor,
+                  ...(shrunklabelposition === 'aboveNotch' && {
+                    transform: 'translate(0px, -17px) scale(0.75)',
+                  }),
+                  ...(shrunklabelposition === 'onNotch' && {
+                    transform: 'translate(15px, -15px) scale(0.75)',
+                  }),
                 },
                 '&:not(.MuiInputLabel-shrink)': {
                   transform: 'none',
