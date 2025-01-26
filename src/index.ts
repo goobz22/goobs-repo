@@ -161,9 +161,6 @@ import AddTask, {
 import ShowTask, {
   ShowTaskProps,
 } from './components/ProjectBoard/forms/ShowTask/client'
-import ManageTask, {
-  ManageTaskProps,
-} from './components/ProjectBoard/forms/ManageTask/client'
 
 /* -------------------------------------------------------------------------- */
 /*                            Type Declarations                               */
@@ -260,7 +257,7 @@ export { FormDataGrid }
 export { FormProjectBoard }
 
 // NEW: Export AddTask / ShowTask / ManageTask
-export { AddTask, ShowTask, ManageTask }
+export { AddTask, ShowTask }
 
 /* -------------------------------------------------------------------------- */
 /*                           Named Type Exports                               */
@@ -352,7 +349,7 @@ export type { TabsProps }
 export type { NavItem }
 
 // NEW: Export prop types for AddTask, ShowTask, ManageTask
-export type { AddTaskProps, ShowTaskProps, ManageTaskProps }
+export type { AddTaskProps, ShowTaskProps }
 
 /* -------------------------------------------------------------------------- */
 /*                             Animation Exports                              */
