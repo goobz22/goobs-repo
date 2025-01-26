@@ -1,4 +1,5 @@
-// src\components\FormProjectBoard\index.tsx
+// src/components/FormProjectBoard/index.tsx
+
 'use client'
 
 import React from 'react'
@@ -96,19 +97,9 @@ function FormProjectBoard({
               gridconfig: { gridwidth: '100%' },
             },
             projectboard: {
-              /**
-               * We must pass ALL the props that the final ProjectBoard expects:
-               * - columns
-               * - tasks
-               * - rawStatuses, rawSubStatuses, etc.
-               * - variant
-               * - boardType
-               * - onUpdateTask
-               * - and optionally "company" if used
-               */
-              variant: projectboard.variant, // <-- IMPORTANT
-              boardType: projectboard.boardType, // <-- IMPORTANT
-
+              // Pass along all props that ProjectBoard needs:
+              variant: projectboard.variant,
+              boardType: projectboard.boardType,
               company: projectboard.company,
 
               columns: projectboard.columns,
@@ -123,7 +114,19 @@ function FormProjectBoard({
               rawEmployees: projectboard.rawEmployees,
               rawSeverityLevels: projectboard.rawSeverityLevels,
 
-              onUpdateTask: projectboard.onUpdateTask, // <-- If you want ProjectBoard to update tasks
+              // Our newly added callbacks / props:
+              onComment: projectboard.onComment,
+              onEdit: projectboard.onEdit,
+              onDelete: projectboard.onDelete,
+              onDuplicate: projectboard.onDuplicate,
+              onCloseTask: projectboard.onCloseTask,
+              onEditComment: projectboard.onEditComment,
+
+              // If controlling ShowTask from a parent:
+              showTaskOpen: projectboard.showTaskOpen,
+
+              // For restricting comment edits, etc.
+              currentUserName: projectboard.currentUserName,
 
               // If you want to position it in a certain row/column in your custom grid:
               columnconfig: {
