@@ -7,17 +7,18 @@ import { columnsAtom } from './jotai/atom'
 
 import Toolbar from '../Toolbar'
 import AddTask from './forms/AddTask/client'
-import ManageTask from './forms/ManageTask/client'
 import ShowTask from './forms/ShowTask/client'
 import { ProjectBoardProps, ColumnData, Task, BoardType } from './types'
 
 import { useColumnDragAndDrop } from './utils/useDragandDrop/columns'
 import { useComputeBoardResize } from './utils/useComputeBoard'
-import Board from './board' // <-- Our new Board component (desktop/tablet/mobile)
+import Board from './board'
 
-// 1) IMPORT the palette here
 import * as palette from '../../styles/palette'
 
+/**
+ * Merge the incoming tasks into columns based on the boardType.
+ */
 function mergeColumnsAndTasks(
   columns: Array<{ _id: string; title: string; description: string }>,
   tasks: Task[],
@@ -52,7 +53,6 @@ function mergeColumnsAndTasks(
 function ProjectBoard({
   variant,
   boardType,
-  company,
   columns = [],
   tasks = [],
   rawStatuses,
@@ -63,28 +63,24 @@ function ProjectBoard({
   rawCustomers,
   rawEmployees,
   rawSeverityLevels,
-  companyAccounts,
-  administrators,
   showTaskOpen: showTaskProp,
-  manageTaskOpen: manageTaskProp,
-  onUpdateTask,
   onEdit,
   onDelete,
   onDuplicate,
   onCloseTask,
   onComment,
+  onEditComment,
+  currentUserName, // <--- pass currentUserName down to ShowTask
 }: ProjectBoardProps) {
   // -----------------------------------------------------------------
-  // 1) Use a Jotai atom for columns + tasks
+  // 1) Atom state for columns + tasks
   // -----------------------------------------------------------------
   const [columnState, setColumnState] = useAtom(columnsAtom)
 
-  // Merge incoming data => single array
   const mergedColumns = useMemo(() => {
     return mergeColumnsAndTasks(columns, tasks, boardType)
   }, [columns, tasks, boardType])
 
-  // Initialize the atom whenever columns/tasks change
   useEffect(() => {
     setColumnState(mergedColumns)
   }, [mergedColumns, setColumnState])
@@ -102,31 +98,30 @@ function ProjectBoard({
       selectedTask?.colIndex === colIndex &&
       selectedTask?.taskIndex === taskIndex
     ) {
-      setSelectedTask(null)
+      setSelectedTask(null) // deselect if clicked again
     } else {
       setSelectedTask({ colIndex, taskIndex })
     }
   }
 
-  // Flatten tasks for modals
+  // Flatten tasks to find the one to display in ShowTask
   const allTasks: Task[] = useMemo(() => {
     return columnState.flatMap(col => col.tasks)
   }, [columnState])
 
   // -----------------------------------------------------------------
-  // 3) COLUMN-LEVEL DRAG & DROP
+  // 3) COLUMN DRAG & DROP
   // -----------------------------------------------------------------
   const { handleColumnDragStart, handleColumnDragOver, handleColumnDrop } =
     useColumnDragAndDrop(columnState, setColumnState)
 
   // -----------------------------------------------------------------
-  // 4) Local state for modals
+  // 4) Local modals
   // -----------------------------------------------------------------
   const [addTaskOpen, setAddTaskOpen] = useState(false)
-  const [localManageTaskOpen, setLocalManageTaskOpen] = useState('-1')
   const [localShowTaskOpen, setLocalShowTaskOpen] = useState('-1')
 
-  const manageTaskOpen = manageTaskProp ?? localManageTaskOpen
+  // If parent controls `showTaskOpen`, use that; else local
   const showTaskOpen = showTaskProp ?? localShowTaskOpen
 
   // -----------------------------------------------------------------
@@ -134,13 +129,14 @@ function ProjectBoard({
   // -----------------------------------------------------------------
   function handleAddTaskSubmit(newTask: Omit<Task, '_id'>) {
     if (columnState.length === 0) return
+
     const newCols = [...columnState]
     const colId = newCols[0]._id
 
     const typedTask: Task = {
       ...newTask,
       _id: String(Date.now()),
-      title: newTask.title || 'Untitled Task',
+      title: newTask.title || '',
       description: newTask.description || '',
     }
 
@@ -165,75 +161,64 @@ function ProjectBoard({
   }
 
   // -----------------------------------------------------------------
-  // 6) ManageTask handler
-  // -----------------------------------------------------------------
-  function handleManageTaskSubmit(data: {
-    taskTitle: string
-    taskDescription: string
-  }) {
-    if (!selectedTask) return
-    const { colIndex, taskIndex } = selectedTask
-    if (
-      colIndex < 0 ||
-      colIndex >= columnState.length ||
-      taskIndex < 0 ||
-      taskIndex >= columnState[colIndex].tasks.length
-    ) {
-      return
-    }
-    const selectedTaskId = columnState[colIndex].tasks[taskIndex]._id
-
-    // Update in state
-    const newCols = columnState.map(col => {
-      const updatedTasks = col.tasks.map(t =>
-        t._id === selectedTaskId
-          ? { ...t, title: data.taskTitle, description: data.taskDescription }
-          : t
-      )
-      return { ...col, tasks: updatedTasks }
-    })
-    setColumnState(newCols)
-
-    // Optionally call external update
-    onUpdateTask?.({
-      companyId: company?._id || 'missing-company-id',
-      _id: selectedTaskId,
-      input: {
-        title: data.taskTitle,
-        description: data.taskDescription,
-      },
-    })
-
-    if (!manageTaskProp) {
-      setLocalManageTaskOpen('-1')
-    }
-  }
-
-  // -----------------------------------------------------------------
-  // 7) ShowTask handler
+  // 6) ShowTask: gather fields
   // -----------------------------------------------------------------
   const currentShowTask = allTasks.find(t => t._id === showTaskOpen)
 
-  const showTaskTitle = currentShowTask?.title || 'Placeholder Title'
-  const showTaskDescription =
-    currentShowTask?.description || 'Placeholder description'
-  const showTaskCreatedBy = currentShowTask?.createdBy || 'Unknown User'
-  const showTaskComments = currentShowTask?.comments || []
-  const showTaskCustomerAssigned =
-    currentShowTask?.customerAssigned || 'Bobbie Sue'
-  const showTaskSeverity = currentShowTask?.severity || 'Critical'
-  const showTaskSchedulingQueue =
-    currentShowTask?.schedulingQueue || 'Technologies Unlimited'
-  const showTaskStatus = currentShowTask?.status || 'Open'
-  const showTaskSubStatus = currentShowTask?.subStatus || 'In Progress'
-  const showTaskTopics = currentShowTask?.topicLabels || ['Technical Support']
-  const showTaskKBArticles = currentShowTask?.kbArticles || [
-    'How to Troubleshoot Stuff',
-  ]
-  const showTaskTeamMemberAssigned =
-    currentShowTask?.teamMember || 'Some Team Member'
-  const showTaskNextActionDate =
-    currentShowTask?.nextActionDate || '09/15/2023 - 8:30AM CST'
+  const showTaskTitle = currentShowTask?.title
+  const showTaskDescription = currentShowTask?.description
+  const showTaskCreatedBy = currentShowTask?.createdBy
+  const showTaskComments = currentShowTask?.comments ?? []
+  const showTaskCustomerAssigned = currentShowTask?.customerAssigned
+  const showTaskSeverity = currentShowTask?.severity
+  const showTaskSchedulingQueue = currentShowTask?.schedulingQueue
+  const showTaskStatus = currentShowTask?.status
+  const showTaskSubStatus = currentShowTask?.subStatus
+  const showTaskTopics = currentShowTask?.topicLabels
+  const showTaskKBArticles = currentShowTask?.kbArticles
+  const showTaskTeamMemberAssigned = currentShowTask?.teamMember
+  const showTaskNextActionDate = currentShowTask?.nextActionDate
+
+  // -----------------------------------------------------------------
+  // 7) Convert raw data => arrays of strings for ShowTask
+  // -----------------------------------------------------------------
+  const showTaskCustomerOptions = useMemo(() => {
+    return (rawCustomers ?? []).map(c =>
+      [c.firstName, c.lastName].filter(Boolean).join(' ')
+    )
+  }, [rawCustomers])
+
+  const showTaskSeverityOptions = useMemo(() => {
+    return (rawSeverityLevels ?? []).map(
+      sl => sl.description || `Severity #${sl.severityLevel}`
+    )
+  }, [rawSeverityLevels])
+
+  const showTaskSchedulingQueueOptions = useMemo(() => {
+    return (rawQueues ?? []).map(q => q.queueName)
+  }, [rawQueues])
+
+  const showTaskStatusOptions = useMemo(() => {
+    return (rawStatuses ?? []).map(s => s.status)
+  }, [rawStatuses])
+
+  const showTaskSubStatusOptions = useMemo(() => {
+    return (rawSubStatuses ?? []).map(ss => ss.subStatus)
+  }, [rawSubStatuses])
+
+  const showTaskTopicOptions = useMemo(() => {
+    return (rawTopics ?? []).map(t => t.topic)
+  }, [rawTopics])
+
+  const showTaskKBArticleOptions = useMemo(() => {
+    return (rawArticles ?? []).map(a => a.articleTitle)
+  }, [rawArticles])
+
+  const showTaskTeamMemberOptions = useMemo(() => {
+    return (rawEmployees ?? []).map(e =>
+      [e.firstName, e.lastName].filter(Boolean).join(' ')
+    )
+  }, [rawEmployees])
 
   // -----------------------------------------------------------------
   // 8) SEARCH + FILTER
@@ -245,19 +230,19 @@ function ProjectBoard({
   }
 
   const filteredColumnState = useMemo(() => {
+    const lowerTerm = searchTerm.toLowerCase()
     return columnState.map(col => {
-      const lowerTerm = searchTerm.toLowerCase()
       const filteredTasks = col.tasks.filter(
-        task =>
-          task.title.toLowerCase().includes(lowerTerm) ||
-          task.description.toLowerCase().includes(lowerTerm)
+        t =>
+          t.title.toLowerCase().includes(lowerTerm) ||
+          t.description.toLowerCase().includes(lowerTerm)
       )
       return { ...col, tasks: filteredTasks }
     })
   }, [columnState, searchTerm])
 
   // -----------------------------------------------------------------
-  // 9) "Fit / Overflow" columns for Desktop
+  // 9) "Fit / Overflow" columns
   // -----------------------------------------------------------------
   const {
     containerRef,
@@ -272,7 +257,41 @@ function ProjectBoard({
   })
 
   // -----------------------------------------------------------------
-  // 10) Render
+  // 10) Handling comment edits => (commentId, newText, taskId)
+  // -----------------------------------------------------------------
+  function handleEditComment(
+    commentId: string,
+    newText: string,
+    taskId: string
+  ) {
+    // Immediate local update
+    setColumnState(oldCols =>
+      oldCols.map(col => {
+        const updatedTasks = col.tasks.map(task => {
+          if (task._id !== taskId) return task
+          const updatedComments = (task.comments || []).map(c => {
+            if (c._id === commentId) {
+              return {
+                ...c,
+                text: newText,
+                updatedAt: new Date().toISOString(),
+                lastEditedBy: currentUserName ?? 'CurrentUser',
+              }
+            }
+            return c
+          })
+          return { ...task, comments: updatedComments }
+        })
+        return { ...col, tasks: updatedTasks }
+      })
+    )
+
+    // Also call parent if provided
+    onEditComment?.(commentId, newText, taskId)
+  }
+
+  // -----------------------------------------------------------------
+  // 11) Render
   // -----------------------------------------------------------------
   const exactlyOneSelected = selectedTask !== null
   let selectedTaskId = ''
@@ -295,20 +314,10 @@ function ProjectBoard({
       onClick: () => setAddTaskOpen(true),
     },
     {
-      text: 'Manage Task',
-      onClick: () => {
-        if (exactlyOneSelected && selectedTaskId) {
-          if (!manageTaskProp) {
-            setLocalManageTaskOpen(selectedTaskId)
-          }
-        }
-      },
-      disabled: !exactlyOneSelected || !selectedTaskId,
-    },
-    {
       text: 'Show Task',
       onClick: () => {
         if (exactlyOneSelected && selectedTaskId) {
+          // If parent does NOT control showTaskOpen, use local
           if (!showTaskProp) {
             setLocalShowTaskOpen(selectedTaskId)
           }
@@ -329,8 +338,6 @@ function ProjectBoard({
           label: 'Search...',
           value: searchTerm,
           onChange: handleSearchChange,
-
-          // 2) USE semiTransparentWhite.main FOR THE SEARCHBAR BG
           backgroundcolor: palette.semiTransparentWhite.main,
           shrunkfontcolor: palette.white.main,
           unshrunkfontcolor: palette.white.main,
@@ -338,7 +345,7 @@ function ProjectBoard({
         }}
       />
 
-      {/* Our new Board component handles desktop/tablet/mobile layouts */}
+      {/* Board layout */}
       <Stack direction="row" spacing={3} mt={1} pl={4}>
         <Board
           columns={fittedColumns}
@@ -369,38 +376,6 @@ function ProjectBoard({
         severityLevels={rawSeverityLevels}
       />
 
-      {/* ManageTask Modal */}
-      <ManageTask
-        open={manageTaskOpen !== '-1'}
-        onClose={() => {
-          if (!manageTaskProp) {
-            setLocalManageTaskOpen('-1')
-          }
-        }}
-        variant={variant}
-        companyAccounts={companyAccounts}
-        administrators={administrators}
-        employees={rawEmployees}
-        statuses={rawStatuses}
-        subStatuses={rawSubStatuses}
-        schedulingQueues={rawQueues}
-        severityLevels={rawSeverityLevels}
-        topics={rawTopics}
-        knowledgebaseArticles={rawArticles}
-        defaultTaskTitle={
-          exactlyOneSelected
-            ? allTasks.find(t => t._id === selectedTaskId)?.title || ''
-            : ''
-        }
-        defaultTaskDescription={
-          exactlyOneSelected
-            ? allTasks.find(t => t._id === selectedTaskId)?.description || ''
-            : ''
-        }
-        defaultNextActionDate={null}
-        onSubmit={handleManageTaskSubmit}
-      />
-
       {/* ShowTask Modal */}
       <ShowTask
         open={showTaskOpen !== '-1'}
@@ -422,11 +397,28 @@ function ProjectBoard({
         knowledgebaseArticles={showTaskKBArticles}
         teamMemberAssigned={showTaskTeamMemberAssigned}
         nextActionDate={showTaskNextActionDate}
+        // Provide currentUserName => ShowTask can restrict edits
+        currentUserName={currentUserName}
+        // Parent-provided actions
         onEdit={() => onEdit?.({ _id: showTaskOpen || '' })}
         onDelete={() => onDelete?.({ _id: showTaskOpen || '' })}
         onDuplicate={() => onDuplicate?.({ _id: showTaskOpen || '' })}
         onCloseTask={() => onCloseTask?.({ _id: showTaskOpen || '' })}
+        // Add new comment
         onComment={text => onComment?.(text, showTaskOpen || '')}
+        // Dropdowns & multi-select
+        customerOptions={showTaskCustomerOptions}
+        severityOptions={showTaskSeverityOptions}
+        schedulingQueueOptions={showTaskSchedulingQueueOptions}
+        statusOptions={showTaskStatusOptions}
+        subStatusOptions={showTaskSubStatusOptions}
+        topicOptions={showTaskTopicOptions}
+        knowledgebaseArticleOptions={showTaskKBArticleOptions}
+        teamMemberOptions={showTaskTeamMemberOptions}
+        // Edits a comment => pass (commentId, newText) => handle local + external
+        onEditComment={(commentId, newText) =>
+          handleEditComment(commentId, newText, showTaskOpen || '')
+        }
       />
     </Box>
   )
