@@ -1,5 +1,3 @@
-'use client'
-
 /** A minimal typed comment for any type of task. */
 export type Comment = {
   _id: string
@@ -228,16 +226,14 @@ export interface ProjectBoardProps {
    * store them here as string states representing the task ID or '-1'.
    */
   showTaskOpen?: string
-  manageTaskOpen?: string
-
-  /** Optional callback to update the store when a task changes columns, etc. */
-  onUpdateTask?: (args: OnUpdateTaskArgs) => void
 
   /** If ShowTask supports "Edit," "Delete," or "Duplicate," pass them here. */
   onEdit?: (args: { _id: string }) => void
   onDelete?: (args: { _id: string }) => void
   onDuplicate?: (args: { _id: string }) => void
+  onEditComment?: (commentId: string, newText: string, taskId: string) => void
   onCloseTask?: (args: { _id: string }) => void
+  currentUserName?: string
 
   /**
    * If ShowTask calls onComment with both commentText and _id,
