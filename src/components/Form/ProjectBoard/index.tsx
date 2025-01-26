@@ -5,11 +5,13 @@
 import React from 'react'
 import { Box } from '@mui/material'
 import ContentSection from '../../Content'
+// Import the ProjectBoardProps type from your types folder:
 import { ProjectBoardProps } from '../../ProjectBoard/types'
 
 /**
- * Props for FormProjectBoard.
- * It's similar to FormDataGrid but for a project board.
+ * Props for FormProjectBoard:
+ * - A simple container that shows a title, description,
+ *   and then renders a ProjectBoard via ContentSection.
  */
 export interface FormProjectBoardProps {
   /** Title text displayed above the project board. */
@@ -114,7 +116,7 @@ function FormProjectBoard({
               rawEmployees: projectboard.rawEmployees,
               rawSeverityLevels: projectboard.rawSeverityLevels,
 
-              // Our newly added callbacks / props:
+              // Callbacks / props that may be in ProjectBoardProps:
               onComment: projectboard.onComment,
               onEdit: projectboard.onEdit,
               onDelete: projectboard.onDelete,
@@ -128,7 +130,7 @@ function FormProjectBoard({
               // For restricting comment edits, etc.
               currentUserName: projectboard.currentUserName,
 
-              // If you want to position it in a certain row/column in your custom grid:
+              // Example column placement in your grid:
               columnconfig: {
                 row: 1,
                 column: 1,
