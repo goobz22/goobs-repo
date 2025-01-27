@@ -3,6 +3,7 @@
 import React, { useCallback, useMemo, useState, useEffect } from 'react'
 import type { ColumnDef, RowData } from '../types'
 import type { SearchbarProps } from '../../Searchbar'
+import * as palette from '../../../styles/palette'
 
 interface UseSearchbarProps {
   columns: ColumnDef[]
@@ -156,6 +157,11 @@ export const useSearchbar = ({
     ...searchbarProps,
     value: searchValue,
     onChange: handleSearchChange,
+    backgroundcolor: palette.semiTransparentWhite.main,
+    shrunkfontcolor: palette.white.main,
+    unshrunkfontcolor: palette.white.main,
+    shrunklabelposition: 'onNotch',
+    label: 'Search DataGrid',
   }
 
   return {
