@@ -1,9 +1,9 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { useState } from 'react'
 
-// Your PopupForm + ContentSection types
-import PopupForm from '../../../Form/Popup'
+// Popup with open/close
+import Popup from '../../../Form/Popup'
 import { ContentSectionProps } from '../../../Content'
 
 // Types from "../index"
@@ -22,13 +22,27 @@ import type {
 export type AddTaskVariant = 'customer' | 'company' | 'administrator'
 
 export interface AddTaskProps {
+  /**
+   * Controls whether the Popup is open or closed.
+   */
   open: boolean
+
+  /**
+   * If `true`, force the Popup closed.
+   */
+  close?: boolean
+
+  /**
+   * Called when user closes the dialog (via Cancel, X button, backdrop, etc.).
+   */
   onClose: () => void
+
   /**
    * Called when the user clicks "Create Task."
    * We pass back an Omit<Task, '_id'> that the parent can store.
    */
   onSubmit: (newTask: Omit<Task, '_id'>) => void
+
   /**
    * Controls which fields appear:
    *   - 'customer'
@@ -50,6 +64,7 @@ export interface AddTaskProps {
 
 const AddTask: React.FC<AddTaskProps> = ({
   open,
+  close,
   onClose,
   onSubmit,
   variant = 'customer',
@@ -57,6 +72,7 @@ const AddTask: React.FC<AddTaskProps> = ({
   subStatuses,
   topics,
   schedulingQueues,
+  knowledgebaseArticles,
   customers,
   employees,
   severityLevels,
@@ -64,38 +80,27 @@ const AddTask: React.FC<AddTaskProps> = ({
   // -------------------------------------------------------------------------
   // 1) Local state for fields
   // -------------------------------------------------------------------------
-  // If variant="customer", store customerId + assignedEmployee (employeeIds)
-  const [selectedAccount, setSelectedAccount] = useState('') // for "customer" or "company"
-  const [selectedAdministrator, setSelectedAdministrator] = useState('') // for "company"
-  const [selectedEmployee, setSelectedEmployee] = useState('') // for "customer"
+  const [selectedAccount, setSelectedAccount] = useState('') // For "customer" or "company"
+  const [selectedAdministrator, setSelectedAdministrator] = useState('') // For "company"
+  const [selectedEmployee, setSelectedEmployee] = useState('') // For "customer"
 
   const [selectedSeverity, setSelectedSeverity] = useState('')
   const [selectedQueue, setSelectedQueue] = useState('')
   const [selectedStatus, setSelectedStatus] = useState('')
   const [selectedSubStatus, setSelectedSubStatus] = useState('')
 
-  const [unassignedTopics, setUnassignedTopics] = useState<string[]>([])
-  const [assignedTopics, setAssignedTopics] = useState<string[]>([])
+  // MultiSelect states for topics & knowledgebase articles (by ID)
+  const [selectedTopicIds, setSelectedTopicIds] = useState<string[]>([])
+  const [selectedArticleIds, setSelectedArticleIds] = useState<string[]>([])
 
   const [taskTitle, setTaskTitle] = useState('')
   const [taskDescription, setTaskDescription] = useState('')
 
   // -------------------------------------------------------------------------
-  // 2) Initialize "topics" in the TransferList
+  // 2) Convert raw data to dropdown-friendly arrays
+  //    (For the <Dropdown> fields, not the multiSelect.)
   // -------------------------------------------------------------------------
-  useEffect(() => {
-    // If you want all topics initially unassigned:
-    const allTopicValues = topics.map(t => t.topic)
-    setUnassignedTopics(allTopicValues)
-    setAssignedTopics([])
-  }, [topics])
-
-  // -------------------------------------------------------------------------
-  // 3) Convert raw data to dropdown-friendly arrays
-  // -------------------------------------------------------------------------
-  const severityOptions = severityLevels.map(sl => ({
-    value: sl._id, // or sl._id if you store it that way
-  }))
+  const severityOptions = severityLevels.map(sl => ({ value: sl._id }))
   const statusOptions = statuses.map(s => ({ value: s._id }))
   const subStatusOptions = subStatuses.map(s => ({ value: s._id }))
   const queueOptions = schedulingQueues.map(q => ({ value: q._id }))
@@ -105,7 +110,7 @@ const AddTask: React.FC<AddTaskProps> = ({
     attribute1: [c.firstName, c.lastName].filter(Boolean).join(' '),
   }))
 
-  // Example "company accounts" (placeholder). You could also supply these from props.
+  // Example "company accounts"
   const companyAccountOptions = [{ value: 'AcmeInc' }, { value: 'TechCorp' }]
 
   // For assigning employees or administrators
@@ -115,76 +120,56 @@ const AddTask: React.FC<AddTaskProps> = ({
   }))
 
   // -------------------------------------------------------------------------
-  // 4) TransferList handler
-  // -------------------------------------------------------------------------
-  const handleTopicsChange = (left: string[], right: string[]) => {
-    setUnassignedTopics(left)
-    setAssignedTopics(right)
-  }
-
-  // -------------------------------------------------------------------------
-  // 5) Handle "Submit"
+  // 3) Handle "Submit"
   // -------------------------------------------------------------------------
   const handleSubmit = () => {
-    // Build an Omit<Task, '_id'> that matches your Task interface fields
+    // Build Omit<Task, '_id'>
     const newTaskData: Omit<Task, '_id'> = {
       title: taskTitle,
       description: taskDescription,
-      topicIds: assignedTopics,
+      topicIds: selectedTopicIds, // store topic IDs
+      articleIds: selectedArticleIds, // store knowledgebase article IDs
     }
 
-    // Severity => severityId
     if (selectedSeverity) {
       newTaskData.severityId = selectedSeverity
     }
-
-    // Scheduling queue => schedulingQueueId
     if (selectedQueue) {
       newTaskData.schedulingQueueId = selectedQueue
     }
-
-    // Status => statusId
     if (selectedStatus) {
       newTaskData.statusId = selectedStatus
     }
-
-    // Substatus => substatusId
     if (selectedSubStatus) {
       newTaskData.substatusId = selectedSubStatus
     }
 
     // Variant-specific fields
     if (variant === 'customer') {
-      // "Customer Account" => newTaskData.customerId
       newTaskData.customerId = selectedAccount || undefined
-      // "Assigned Employee" => newTaskData.employeeIds = [selectedEmployee]
       if (selectedEmployee) {
         newTaskData.employeeIds = [selectedEmployee]
       }
     } else if (variant === 'company') {
-      // "Company Account" => newTaskData.companyId
       newTaskData.companyId = selectedAccount || undefined
-      // "Assigned Administrator" => newTaskData.employeeIds = [selectedAdministrator]
       if (selectedAdministrator) {
         newTaskData.employeeIds = [selectedAdministrator]
       }
-    } else if (variant === 'administrator') {
-      // e.g., no special account fields
-      // Possibly defaults or skip
     }
 
+    // 'administrator' => no special account fields
     onSubmit(newTaskData)
   }
 
   // -------------------------------------------------------------------------
-  // 6) Type guard for filter(Boolean)-style usage
+  // 4) Type guard for filter(Boolean)-style usage
   // -------------------------------------------------------------------------
   function isDefinedDropdown<T>(val: T | false | null | undefined): val is T {
     return Boolean(val)
   }
 
   // -------------------------------------------------------------------------
-  // 7) Define the grids for ContentSection
+  // 5) Define the grids for ContentSection
   // -------------------------------------------------------------------------
   const mainGrid: ContentSectionProps['grids'][0] = {
     grid: {
@@ -195,7 +180,7 @@ const AddTask: React.FC<AddTaskProps> = ({
     dropdown: (
       [
         // ----------------------------
-        // "customer" => Customer Account + Assigned Employee
+        // "customer"
         // ----------------------------
         variant === 'customer' && {
           label: 'Customer Account',
@@ -217,7 +202,7 @@ const AddTask: React.FC<AddTaskProps> = ({
         },
 
         // ----------------------------
-        // "company" => Company Account + Assigned Administrator
+        // "company"
         // ----------------------------
         variant === 'company' && {
           label: 'Company Account',
@@ -239,7 +224,7 @@ const AddTask: React.FC<AddTaskProps> = ({
         },
 
         // ----------------------------
-        // row=2 => Severity, Queue (all variants)
+        // row=2 => Severity, Queue
         // ----------------------------
         {
           label: 'Severity Level',
@@ -261,7 +246,7 @@ const AddTask: React.FC<AddTaskProps> = ({
         },
 
         // ----------------------------
-        // row=3 => Status, Substatus (all variants)
+        // row=3 => Status, Substatus
         // ----------------------------
         {
           label: 'Status',
@@ -294,30 +279,43 @@ const AddTask: React.FC<AddTaskProps> = ({
       )[]
     ).filter(isDefinedDropdown),
 
-    // TransferList
-    transferlist: [
+    // ----------------------------
+    // MultiSelect for "Topics" + "Knowledgebase Articles"
+    // (Storing IDs)
+    // ----------------------------
+    multiSelect: [
       {
-        leftItems: unassignedTopics,
-        rightItems: assignedTopics,
-        leftTitle: 'Unassigned Topics',
-        rightTitle: 'Assigned Topics',
-        onChange: handleTopicsChange,
+        label: 'Topics (by ID)',
+        /**
+         * We'll store the IDs in the multi-select to keep
+         * `selectedTopicIds` consistent with the Task interface (topicIds).
+         */
+        options: topics.map(t => t._id),
+        defaultSelected: selectedTopicIds,
+        onChange: (newVals: string[]) => setSelectedTopicIds(newVals),
         columnconfig: { row: 4, column: 1, columnwidth: '100%' },
+      },
+      {
+        label: 'Knowledgebase Articles (by ID)',
+        options: knowledgebaseArticles.map(a => a._id),
+        defaultSelected: selectedArticleIds,
+        onChange: (newVals: string[]) => setSelectedArticleIds(newVals),
+        columnconfig: { row: 5, column: 1, columnwidth: '100%' },
       },
     ],
 
-    // Task Title
+    // row=6 => Task Title
     textfield: [
       {
         label: 'Task Title',
         value: taskTitle,
         onChange: (e: React.ChangeEvent<HTMLInputElement>) =>
           setTaskTitle(e.target.value),
-        columnconfig: { row: 5, column: 1, columnwidth: '100%' },
+        columnconfig: { row: 6, column: 1, columnwidth: '100%' },
       },
     ],
 
-    // Task Description
+    // row=7 => Task Description
     complexeditor: [
       {
         label: 'Task Description',
@@ -325,7 +323,7 @@ const AddTask: React.FC<AddTaskProps> = ({
         value: taskDescription,
         minRows: 5,
         onChange: (val: string) => setTaskDescription(val),
-        columnconfig: { row: 6, column: 1, columnwidth: '100%' },
+        columnconfig: { row: 7, column: 1, columnwidth: '100%' },
       },
     ],
   }
@@ -342,7 +340,7 @@ const AddTask: React.FC<AddTaskProps> = ({
         text: 'Cancel',
         backgroundcolor: 'none',
         fontcolor: 'black',
-        onClick: onClose,
+        onClick: onClose, // Tells the parent to close
         columnconfig: { row: 1, column: 1 },
       },
       {
@@ -356,11 +354,14 @@ const AddTask: React.FC<AddTaskProps> = ({
   }
 
   // -------------------------------------------------------------------------
-  // 8) Render
+  // 6) Render
   // -------------------------------------------------------------------------
   return (
-    <PopupForm
+    <Popup
       open={open}
+      // If close is undefined, default to false so Popup sees a boolean
+      close={close ?? false}
+      onClose={onClose}
       title="Create Task"
       width={700}
       grids={[mainGrid, buttonGrid]}
