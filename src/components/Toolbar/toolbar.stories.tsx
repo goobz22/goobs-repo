@@ -90,7 +90,7 @@ export const WithSearch: Story = {
 export const WithDropdown: Story = {
   args: {
     buttons: [{ text: 'Only Button' }],
-    dropdown: sampleDropdown,
+    dropdowns: [sampleDropdown],
   },
   play: ({ canvasElement }) => {
     const canvas = within(canvasElement)
@@ -115,7 +115,7 @@ export const FullSetup: Story = {
       onShow: () => console.log('show'),
       handleClose: () => console.log('close'),
     },
-    dropdown: sampleDropdown,
+    dropdowns: [sampleDropdown],
   },
   play: ({ canvasElement }) => {
     const canvas = within(canvasElement)

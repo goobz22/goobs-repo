@@ -1,5 +1,3 @@
-// src/components/Toolbar/Right/index.tsx
-
 'use client'
 
 import React from 'react'
@@ -8,8 +6,8 @@ import Dropdown, { DropdownProps } from '../../Dropdown'
 import { black } from '../../../styles/palette'
 
 export interface RightProps {
-  /** A single dropdown to render on the right side. */
-  dropdown?: DropdownProps
+  /** A single dropdown to render. (We'll render multiple <Right> if needed.) */
+  dropdown: DropdownProps
 }
 
 function Right({ dropdown }: RightProps) {
@@ -25,15 +23,13 @@ function Right({ dropdown }: RightProps) {
         width: '200px',
       }}
     >
-      {dropdown && (
-        <Dropdown
-          outlinecolor={black.main}
-          fontcolor={black.main}
-          shrunkfontcolor={black.main}
-          onChange={() => console.log('Dropdown changed')}
-          {...dropdown}
-        />
-      )}
+      <Dropdown
+        outlinecolor={black.main}
+        fontcolor={black.main}
+        shrunkfontcolor={black.main}
+        onChange={() => console.log('Dropdown changed')}
+        {...dropdown}
+      />
     </Box>
   )
 }
