@@ -88,7 +88,7 @@ const StyledMuiTextField = styled(MuiTextField, {
   }) => ({
     '& .MuiOutlinedInput-root': {
       minHeight: '40px',
-      height: '40px',
+      height: 'auto', // allow vertical expansion
       backgroundColor: backgroundcolor || 'inherit',
       color: fontcolor || 'black',
       '& .MuiSelect-icon': {
@@ -219,7 +219,6 @@ const TextField = React.memo<TextFieldProps>(props => {
           <InputAdornment
             position="end"
             sx={{
-              // This styling ensures *all* icons (svg elements) in the end adornment are black
               color: '#000000 !important',
               '& svg': {
                 color: '#000000 !important',
@@ -268,10 +267,11 @@ const TextField = React.memo<TextFieldProps>(props => {
       sx={{
         display: 'flex',
         flexDirection: 'column',
-        justifyContent: 'flex-end',
+        justifyContent: 'flex-start', // top-aligned so errors appear below
         width: '100%',
-        height: '55px',
-        overflow: 'hidden',
+        marginTop: '15px',
+        height: 'auto', // allow expansion
+        overflow: 'visible', // ensure error messages are visible
         ...sx,
       }}
       onClick={handleClick}
