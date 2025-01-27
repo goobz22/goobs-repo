@@ -19,7 +19,7 @@ import RadioGroup, {
   RadioOption,
   RadioGroupProps,
 } from './components/RadioGroup'
-import PopupForm, { PopupProps } from './components/Form/Popup'
+import Popup, { PopupProps } from './components/Form/Popup'
 import Dialog, { DialogFormProps } from './components/Form/Dialog'
 import ContentSection, { ContentSectionProps } from './components/Content'
 import {
@@ -172,7 +172,7 @@ declare type ConfirmationCodeInputProps = React.ComponentProps<
   typeof ConfirmationCodeInput
 >
 declare type RadioGroupComponentProps = React.ComponentProps<typeof RadioGroup>
-declare type PopupFormComponentProps = React.ComponentProps<typeof PopupForm>
+declare type PopupFormComponentProps = React.ComponentProps<typeof Popup>
 declare type ContentSectionComponentProps = React.ComponentProps<
   typeof ContentSection
 >
@@ -225,7 +225,7 @@ export { CustomGrid }
 export { Typography }
 export { ConfirmationCodeInput }
 export { RadioGroup }
-export { PopupForm }
+export { Popup }
 export { ContentSection }
 export { Accordion, AccordionSummary, AccordionDetails }
 export { Card }
