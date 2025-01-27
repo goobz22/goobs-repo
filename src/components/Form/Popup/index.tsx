@@ -10,11 +10,13 @@ import { ExtendedTypographyProps } from '../../Content/Structure/typography/useG
 export interface PopupProps {
   open: boolean
   /**
-   * Optional flag indicating the popup should be closed.
-   * This is just for observing the internal 'closed' state externally,
-   * or forcing the component closed from outside.
+   * Optional flag indicating the popup should be closed from the parent.
    */
-  close?: boolean
+  close: boolean
+  /**
+   * Optional callback so the parent can be informed when user closes the dialog.
+   */
+  onClose: () => void
   title?: string
   description?: string
   grids?: ContentSectionProps['grids']
@@ -25,6 +27,7 @@ export interface PopupProps {
 function Popup({
   open,
   close,
+  onClose, // <----- ADDED
   title,
   description,
   grids,
@@ -109,6 +112,7 @@ function Popup({
   const handleClose = () => {
     setIsOpen(false)
     setIsClosed(true)
+    onClose?.() // <----- CALL PARENT onClose IF PROVIDED
   }
 
   return (
