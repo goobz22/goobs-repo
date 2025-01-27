@@ -1,4 +1,4 @@
-// src\components\ComplexTextEditor\index.tsx
+// src/components/ComplexTextEditor/index.tsx
 
 import React, { useState, useEffect } from 'react'
 import { Box } from '@mui/material'
@@ -7,6 +7,11 @@ import ComplexToolbar, { EditorMode } from './Toolbars/Complex'
 
 export type EditorType = 'simple' | 'markdown' | 'rich' | 'complex'
 
+/**
+ * We extend ComplexTextEditorProps to allow the same
+ * text field behavior (error, helperText, required)
+ * that we introduced in SimpleEditor.
+ */
 export interface ComplexTextEditorProps {
   value: string
   onChange?: (val: string) => void
@@ -14,6 +19,9 @@ export interface ComplexTextEditorProps {
   minRows?: number
   accordion?: boolean
   editorType?: EditorType
+  error?: boolean
+  helperText?: React.ReactNode
+  required?: boolean
 }
 
 const ComplexTextEditor: React.FC<ComplexTextEditorProps> = ({
@@ -22,15 +30,16 @@ const ComplexTextEditor: React.FC<ComplexTextEditorProps> = ({
   label,
   minRows = 5,
   editorType = 'complex',
+  error,
+  helperText,
+  required,
 }) => {
-  // If editorType is complex, start in simple mode
   const [mode, setMode] = useState<EditorMode>(
     editorType === 'complex' ? 'simple' : editorType
   )
   const [simpleText, setSimpleText] = useState(value)
 
   useEffect(() => {
-    // If the input value changes from outside, update simpleText
     setSimpleText(value)
   }, [value])
 
@@ -42,7 +51,8 @@ const ComplexTextEditor: React.FC<ComplexTextEditorProps> = ({
   }
 
   const renderEditor = () => {
-    // For now, we only support 'simple' directly. You can expand to 'rich'/'markdown' if needed.
+    // Currently, we only support "simple" mode directly (and the "else" path).
+    // If you implement "rich"/"markdown", you'd handle it similarly.
     if (mode === 'simple') {
       return (
         <SimpleEditor
@@ -50,17 +60,23 @@ const ComplexTextEditor: React.FC<ComplexTextEditorProps> = ({
           setValue={handleSimpleTextChange}
           minRows={minRows}
           label={label}
+          error={error}
+          helperText={helperText}
+          required={required}
         />
       )
     }
 
-    // If you implement other modes (rich, markdown), handle them here.
+    // Default to "simple" if mode is something else unhandled
     return (
       <SimpleEditor
         value={simpleText}
         setValue={handleSimpleTextChange}
         minRows={minRows}
         label={label}
+        error={error}
+        helperText={helperText}
+        required={required}
       />
     )
   }
