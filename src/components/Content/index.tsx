@@ -75,6 +75,9 @@ import useAccordion, {
 import useProjectBoard, {
   ExtendedProjectBoardProps,
 } from './Structure/projectboard/useProjectBoard'
+import useMultiSelect, {
+  ExtendedMultiSelectProps,
+} from './Structure/multiSelect/useMultiSelect'
 
 /**
  * Props for the ContentSection component.
@@ -118,6 +121,7 @@ export interface ContentSectionProps {
       | ExtendedPhoneNumberFieldProps
       | ExtendedPhoneNumberFieldProps[]
     checkbox?: ExtendedCheckboxProps | ExtendedCheckboxProps[]
+    multiSelect?: ExtendedMultiSelectProps | ExtendedMultiSelectProps[]
   }>
   width?: number
 }
@@ -162,6 +166,7 @@ const RenderContent: React.FC<
   addToColumnConfigs(useDateField(props))
   addToColumnConfigs(useProjectBoard(props))
   addToColumnConfigs(useAccordion(props))
+  addToColumnConfigs(useMultiSelect(props))
   addToColumnConfigs(useCheckbox(props))
   addToColumnConfigs(usePhoneNumber(props))
   addToColumnConfigs(useDropdown(props))
