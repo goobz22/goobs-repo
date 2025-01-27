@@ -44,15 +44,17 @@ const StyledAutocomplete = styled(
   shrunkfontcolor?: string
   unshrunkfontcolor?: string
   shrunklabelposition?: 'onNotch' | 'aboveNotch'
-}>(
-  ({
+}>(props => {
+  const {
     outlinecolor,
     fontcolor,
     inputfontcolor,
     shrunkfontcolor,
     unshrunkfontcolor,
     shrunklabelposition,
-  }) => ({
+  } = props
+
+  return {
     '& .MuiOutlinedInput-root': {
       overflow: 'visible',
       minHeight: '45px',
@@ -87,8 +89,8 @@ const StyledAutocomplete = styled(
         }),
       },
     },
-  })
-)
+  }
+})
 
 const SearchableDropdown: React.FC<SearchableDropdownProps> = ({
   label,
@@ -192,24 +194,35 @@ const SearchableDropdown: React.FC<SearchableDropdownProps> = ({
           option.value.replace(/_/g, ' ').slice(1)
         )
       }}
-      renderOption={(liProps, option) => (
-        <li {...liProps} style={{ color: black.main }}>
-          <Typography
-            fontvariant="merriparagraph"
-            text={option.value.replace(/_/g, ' ')}
-            fontcolor={black.main}
-          />
-          {option.attribute1 && (
+      /**
+       * Add an explicit type to the `props` parameter here to avoid
+       * the “Unsafe array destructuring of a tuple element with an `any` value” error.
+       */
+      renderOption={(
+        liProps: React.HTMLAttributes<HTMLLIElement> & { key?: React.Key },
+        option: DropdownOption
+      ) => {
+        // Destructure `key` so it won't be spread
+        const { key, ...restLiProps } = liProps
+        return (
+          <li key={key} {...restLiProps} style={{ color: black.main }}>
             <Typography
               fontvariant="merriparagraph"
-              text={`${option.attribute1}${
-                option.attribute2 ? ` | ${option.attribute2}` : ''
-              }`}
+              text={option.value.replace(/_/g, ' ')}
               fontcolor={black.main}
             />
-          )}
-        </li>
-      )}
+            {option.attribute1 && (
+              <Typography
+                fontvariant="merriparagraph"
+                text={`${option.attribute1}${
+                  option.attribute2 ? ` | ${option.attribute2}` : ''
+                }`}
+                fontcolor={black.main}
+              />
+            )}
+          </li>
+        )
+      }}
       renderInput={params => (
         <TextField
           {...params}
