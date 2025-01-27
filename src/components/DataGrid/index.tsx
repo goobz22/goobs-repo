@@ -106,7 +106,7 @@ function DataGrid({
 
       <CustomToolbar
         buttons={buttons}
-        dropdown={dropdowns?.[0]}
+        dropdowns={dropdowns?.[0] ? [dropdowns[0]] : undefined}
         searchbarProps={updatedSearchbarProps}
         rightCenterProps={
           selectedRows.length > 0
