@@ -54,9 +54,7 @@ Below is a high-level overview of all components now available in goobs-frontend
 
 Description: A collapsible container for toggling expanded/collapsed content.
 
-Features:
-
-Built on Material-UI’s Accordion.
+Features: Built on Material-UI’s Accordion.
 
 Combines Accordion, AccordionSummary, and AccordionDetails for a complete layout.
 
