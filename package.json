@@ -16,12 +16,11 @@
     "dev": "next dev",
     "build": "next build",
     "serve": "next start",
-    "start": "storybook init",
+    "start": "storybook dev -p 6006",
     "lint": "next lint",
-    "storybook": "start-storybook -p 6006 -s",
-    "build-storybook": "build-storybook -s",
-    "serve-storybook": "serve storybook-static",
-    "chromatic": "chromatic --project-token=chpt_2d34a5f45351b6c"
+    "storybook": "storybook dev -p 6006",
+    "chromatic": "chromatic --project-token=chpt_2d34a5f45351b6c",
+    "build-storybook": "storybook build"
   },
   "dependencies": {
     "@emotion/cache": "^11.14.0",
