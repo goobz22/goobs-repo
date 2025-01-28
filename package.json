@@ -16,9 +16,9 @@
     "dev": "next dev",
     "build": "next build",
     "serve": "next start",
-    "start": "storybook dev -p 6006",
+    "start": "storybook dev -p 443",
     "lint": "next lint",
-    "storybook": "storybook dev -p 6006",
+    "storybook": "storybook dev -p 443",
     "chromatic": "chromatic --project-token=chpt_2d34a5f45351b6c",
     "build-storybook": "storybook build"
   },
