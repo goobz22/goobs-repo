@@ -1,6 +1,6 @@
 {
   "name": "goobs-frontend",
-  "version": "0.9.0",
+  "version": "0.9.1",
   "type": "module",
   "description": "A comprehensive React-based libary that extends the functionality of Material-UI",
   "license": "MIT",
@@ -19,7 +19,6 @@
     "start": "storybook dev -p 6006",
     "lint": "next lint",
     "storybook": "storybook dev -p 6006",
-    "chromatic": "chromatic --project-token=chpt_2d34a5f45351b6c",
     "build-storybook": "storybook build"
   },
   "dependencies": {
